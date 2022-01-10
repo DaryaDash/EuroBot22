@@ -17,10 +17,13 @@ r_ping, l_ping, f_ping = 0,0,0
 integral, prevErr = 0,0
 start_button = False
 
+timer_val = True #таймер разрешает работать
 now_yaw = 0
 
 pub_front_servo = rospy.Publisher('front_servo', Int64, queue_size=10)
-pub_front_manipul = rospy.Publisher('grab', Bool, queue_size=10)
+pub_front_manipul = rospy.Publisher('front_grab', Bool, queue_size=10)
+pub_back_servo = rospy.Publisher('back_servo', Bool, queue_size=10)
+pub_back_manipul = rospy.Publisher('back_grab', Bool, queue_size=10)
 pub_enc_zero = rospy.Publisher('ENC_zero', Bool, queue_size=10)
 pub_yaw = rospy.Publisher('yaw', Float64, queue_size=10)
 pub_linear_y = rospy.Publisher('linear_y', Float64, queue_size=10)
@@ -72,42 +75,10 @@ def kinematik_local(xv, yv, corner_to_change=0):                   #публик
     moveing = True
     v1, v2, v3 = v1v2v3(xv, yv, corner_to_change)
     v2 = -v2
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v3)
-    pub_bmotor.publish(v2)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
-    pub_lmotor.publish(v1)
-    pub_rmotor.publish(v2)
-    pub_bmotor.publish(v3)
+    for i in range(10):
+        pub_lmotor.publish(v1)
+        pub_rmotor.publish(v3)
+        pub_bmotor.publish(v2)
     print(v1, v2, v3)
 
 def kinematik_world(data):               #не готово
@@ -193,7 +164,10 @@ def left_ping(data):
 def right_ping(data):
     global r_ping
     r_ping = data.range
-
+fail = True
+def fail_button(data):
+    global fail
+    fail = data.data
 
 
 def move_local_odom(x, y):                            #принимает Х, У; движется по координатам и останавливается 
@@ -233,6 +207,30 @@ def vel_odom():
     vel_right_odom = (r_enc - right_last)
     print('L: ', vel_left_odom, 'R: ', vel_right_odom, 'L_enc: ', l_enc, "R_enc: ", r_enc)
     return vel_left_odom, vel_right_odom
+
+
+def timer():
+    global min_start, sec_start
+    min_now = time.gmtime().tm_min
+    sec_now = time.gmtime().tm_sec
+    time_ = (min_now - min_start)* 60 + (sec_now - sec_start)
+    if time_ > 100:
+        while True:
+            stop()
+            if rospy.is_shutdown():
+                break
+   # elif time_ > 110:
+    #    return False
+    return True
+
+def timer2():
+    global min_start2, sec_start2
+    min_now = time.gmtime().tm_min
+    sec_now = time.gmtime().tm_sec
+    time_ = (min_now - min_start)* 60 + (sec_now - sec_start)
+    if time_ < 10:
+        return False
+    return True
 
 
 
@@ -345,14 +343,14 @@ def move_navx_odom(target_x, target_y, target_yaw=0):
     stop()
 
 def move_yaw(target_yaw, right):
-    global correct
-    while not rospy.is_shutdown():
+    global correct, timer_val
+    while not rospy.is_shutdown() and timer_val:
         for i in range(40):
             try:
                 now_yaw = get_yaw_navx() - correct
             except:
                 pass
-        if abs(now_yaw - target_yaw) < 7:
+        if abs(now_yaw - target_yaw) < 10:
             break
         #err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
         if now_yaw > target_yaw:
@@ -373,6 +371,7 @@ def move_yaw(target_yaw, right):
         pub_bmotor.publish(v_back*0.6)
         print(v_left, v_right, v_back)
         print(now_yaw)
+        timer_val = timer()
         time.sleep(0.2)
         stop()
     stop()
@@ -383,8 +382,8 @@ def move_yaw(target_yaw, right):
 line_val = 0
 
 
-def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, move_forward=True, dist_to_wall=True, target_yaw=0, line=False):
-    global correct
+def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, move_forward=True, dist_to_wall=True, target_yaw=0, line=False, time_move=False):
+    global correct, timer_val, min_start2, sec_start2
     distance = sqrt(target_x**2+target_y**2)
     xv = (target_x/distance)*velocity
     yv = (target_y/distance)*velocity
@@ -398,16 +397,19 @@ def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, mov
         pass
     if target_y > 0:
         pass
-    
+    min_start2 = time.gmtime().tm_min
+    sec_start2 = time.gmtime().tm_sec
     now_yaw = float(get_yaw_navx()) - correct
     line_last_val = line_val
-    while not rospy.is_shutdown():
-        if f_ping < 5:
+    while not rospy.is_shutdown() and timer_val:
+        if f_ping < 0:
             pass
-        if l_ping < 5:
+        if l_ping < 0:
             pass
-        if r_ping < 5:
+        if r_ping < 0:
             pass
+        #if time_val2:
+
         else:
             print(line_val, line_last_val)
             rospy.Subscriber('line', Int64, detection_line)
@@ -415,6 +417,10 @@ def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, mov
             if abs(line_val - line_last_val) > 15 and line:
                 break
             line_last_val = line_val
+            if time_move:
+                if timer2():
+                    print(timer2())
+                    break
             if move_forward:
                 if target_f and (f_ping < target_f):
                     break
@@ -449,6 +455,7 @@ def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, mov
             print(now_yaw, v_left*0.6, v_right, v_back*0.7)
             print(l_ping, f_ping, r_ping)
             #time.sleep(0.1)
+            timer_val = timer()
     stop()
     while False and not rospy.is_shutdown():
         if abs(now_yaw - target_yaw) < 10:
@@ -478,11 +485,14 @@ def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, mov
 right_move = 1
 
 def main():                              #главный код
-    global moveing, correct, velocity
+    global moveing, correct, velocity, min_start, sec_start, fail
     rospy.init_node('kinematik')
     correct = 38
     stop()
-    while not start_button:
+    for i in range(20):
+        pub_front_servo.publish(1)
+        pub_front_manipul.publish(False)
+    while  not start_button:
         rospy.Subscriber('range_front_ping', Range, front_ping)
         rospy.Subscriber('range_left_ping', Range, left_ping)
         rospy.Subscriber('range_right_ping', Range, right_ping)
@@ -494,25 +504,62 @@ def main():                              #главный код
             correct = float(get_yaw_navx())
             break
     correct = float(get_yaw_navx())
+    min_start = time.gmtime().tm_min
+    sec_start = time.gmtime().tm_sec
+
     for i in range(20):
-        pub_front_servo.publish(0)
+        pub_front_servo.publish(1)
         pub_front_manipul.publish(False)
-    move_navx_f_ping(-1*right_move, 0, target_r=26, move_forward=False)
+    if right_move == 1:
+        move_navx_f_ping(-1*right_move, 0, target_r=30, move_forward=False)
+    else:
+        move_navx_f_ping(-1*right_move, 0, target_l=30, move_forward=False)
     time.sleep(1)
-    move_navx_f_ping(0, 1, 35)
+    move_navx_f_ping(0, 1, 33)
+    if right_move == 1:
+        move_navx_f_ping(1*right_move, 0, target_r=23)#, move_forward=False)
+    else:
+        move_navx_f_ping(1*right_move, 0, target_l=23)#, move_forward=False)
     #move_navx_f_ping(1*right_move, 0, target_r=20)
     time.sleep(1)
     #move_navx_f_ping(1*right_move, 0, target_r=25, target_yaw=0, move_forward=True)
     move_yaw(45*right_move, 1)
     velocity -= 70
-    move_navx_f_ping(1*right_move, 0, line=True, target_yaw=45, target_r=20)
+    #move_navx_f_ping(1*right_move, 0, line=True, target_yaw=45, target_r=30)
     velocity += 70
     for i in range(20):
-        pub_lmotor.publish(-100)
-        pub_rmotor.publish(-170)
+        pub_lmotor.publish(-90)
+        pub_rmotor.publish(-160)
     time.sleep(1)
     #move_navx_f_ping(1, 0, target_l=78, move_forward=False, target_yaw=45)
     stop()
+    vl, vr, vb = v1v2v3(200, 0)
+#    pub_lmotor.publish(vl)
+ #   pub_rmotor.publish(-vr)
+  #  pub_bmotor.publish(vb)
+   # time.sleep(0.5)
+    #stop()
+#    time.sleep(0.5)
+ #   for i in range(2):
+  #      pub_lmotor.publish(-vl)
+   #     pub_rmotor.publish(vr)
+    #    pub_bmotor.publish(-vb)
+     #   time.sleep(0.5)
+      #  stop()
+       # time.sleep(0.5)
+#    pub_lmotor.publish(vl)
+ #   pub_rmotor.publish(-vr)
+  #  pub_bmotor.publish(vb)
+   # time.sleep(0.5)
+    stop()
+    move_yaw(20*right_move, -1)
+    move_yaw(70*right_move, 1)
+    for i in range(20):
+        pub_lmotor.publish(-70)
+        pub_rmotor.publish(-190)
+    time.sleep(1)
+    stop()
+    move_yaw(45*right_move, -1)
     for i in range(50):
         pub_front_servo.publish(1)
     time.sleep(1)
@@ -520,19 +567,52 @@ def main():                              #главный код
         pub_front_manipul.publish(True)
     time.sleep(1)
     for i in range(50):
-        pub_front_servo.publish(1)
-    time.sleep(0)
-    
+        pub_front_servo.publish(0)
+    #time.sleep(1)
+    stop
+#for i in range(20):
+     #   pub_lmotor.publish(-70)
+    #    pub_rmotor.publish(-190)
+    time.sleep(1)
+    stop()
     #for i in range(20):
      #   pub_lmotor.publish(120)
       #  pub_rmotor.publish(200)
     time.sleep(0.5)
     move_yaw(0, 1)
     stop()
-    move_navx_f_ping(0, -1, 80,  move_forward=False)
+    move_navx_f_ping(0, -1,70, move_forward=False)#, time_move=True)
     #move_yaw(-90, -1)
-    move_navx_f_ping(1*right_move, 0, target_r=10)
+    time.sleep(1)
+    rospy.Subscriber('fail', Bool, fail_button)
+    time.sleep(1)
+    if False and not fail:
+        rospy.Subscriber('fail', Bool, fail_button)
+        time.sleep(1)
+        if not fail:
+            rospy.Subscriber('fail', Bool, fail_button)
+            time.sleep(1)
+            if not fail:
+                rospy.Subscriber('fail', Bool, fail_button)
+                time.sleep(1)
+                if not fail:
+                    rospy.Subscriber('fail', Bool, fail_button)
+                    time.sleep(1)
+                    if not fail:
+                        for i in range(20):
+                            pub_lmotor.publish(-90)
+                            pub_rmotor.publish(-160)
+                    time.sleep(1.5)
     stop()
+    time.sleep(1)
+    if right_move == 1:
+        move_navx_f_ping(1*right_move, 0, target_r=10)
+    else:
+        move_navx_f_ping(1*right_move, 0, target_l=10)
+    stop()
+    timer_val = timer()
+    if not timer_val:
+        print('time_over')
 
 
 
