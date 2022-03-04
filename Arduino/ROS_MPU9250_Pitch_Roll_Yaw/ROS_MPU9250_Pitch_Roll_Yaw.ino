@@ -30,13 +30,7 @@ void setup() {
   nh.advertise(pub_yaw);
   nh.advertise(pub_roll);
   nh.advertise(pub_pitch);
-   // Serial.begin(115200);
-   // while (!Serial) {
-        ; // Ожидаем когда появиться Serial Port через USB
-   // }
-
-   // imu_connection   = (imu.begin() == MPU_OK);
-   // Serial.println(imu_connection ? "MPU9250 соединение установлено" : "MPU9250 соединение не установлено");
+  
 }
 
 void loop() {
@@ -50,14 +44,6 @@ void loop() {
         pub_pitch.publish (&pitch_msg);
         pub_roll.publish (&roll_msg);
         pub_yaw.publish (&yaw_msg); 
-       // roll_msg.twist=angles[1];
-       // yaw_msg.twist=angles[0];
-       // Serial.print(" Pitch/Тангаж = ");
-        //Serial.print(angles[2]);
-        //Serial.print(" Roll/Крен = ");
-        //Serial.print(angles[1]);
-        //Serial.print(" Yaw/Рысканье = ");
-        //Serial.println(angles[0]);
     }
 }
 
