@@ -28,7 +28,7 @@ pinMode(PINGEcho[i], INPUT);
 }
 
 unsigned long ping(int index){
-  unsigned long echo,cm;
+unsigned long echo,cm;
 
   digitalWrite(PINGTrig[index], LOW);
   delayMicroseconds(5);
@@ -44,17 +44,14 @@ unsigned long ping(int index){
     case 0:
     rangeL_msg.range=cm;
     pub_range_left.publish (&rangeL_msg);
-     nh.spinOnce();
     break;
   case 1:
     rangeF_msg.range=cm;
     pub_range_front.publish (&rangeF_msg);
-     nh.spinOnce();
     break;
   case 2:
     rangeR_msg.range=cm;
     pub_range_right.publish (&rangeR_msg);
-     nh.spinOnce();
     break;
   }
   return cm ; //convert to CM then to inches
@@ -67,6 +64,7 @@ void loop() {
     delay(50);
 
   }
+  nh.spinOnce();
   delay(50); 
   // put your main code here, to run repeatedly:
 

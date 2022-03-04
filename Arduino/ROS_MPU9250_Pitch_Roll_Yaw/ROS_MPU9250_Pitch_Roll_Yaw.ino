@@ -44,15 +44,20 @@ void loop() {
     // put your main code here, to run repeatedly:
     if (imu_connection) {
         IMU_GetYawPitchRoll(angles, millis());
-        pitch_msg.angular =angles[2];
+        pitch_msg.linear.x =angles[2];
+        pitch_msg.linear.y =angles[0];
+        pitch_msg.linear.z =angles[1];
+        pub_pitch.publish (&pitch_msg);
+        pub_roll.publish (&roll_msg);
+        pub_yaw.publish (&yaw_msg); 
        // roll_msg.twist=angles[1];
        // yaw_msg.twist=angles[0];
-        Serial.print(" Pitch/Тангаж = ");
-        Serial.print(angles[2]);
-        Serial.print(" Roll/Крен = ");
-        Serial.print(angles[1]);
-        Serial.print(" Yaw/Рысканье = ");
-        Serial.println(angles[0]);
+       // Serial.print(" Pitch/Тангаж = ");
+        //Serial.print(angles[2]);
+        //Serial.print(" Roll/Крен = ");
+        //Serial.print(angles[1]);
+        //Serial.print(" Yaw/Рысканье = ");
+        //Serial.println(angles[0]);
     }
 }
 
@@ -263,10 +268,10 @@ void IMU_GetQuater(void) {
     MotionVal[7] = imu.my_raw;
     MotionVal[8] = imu.mz_raw;
 
-    MadgwickAHRSupdate((float)MotionVal[0] * 0.0175, (float)MotionVal[1] * 0.0175, (float)MotionVal[2] * 0.0175, (float)MotionVal[3], (float)MotionVal[4],
-                       (float)MotionVal[5], (float)MotionVal[6], (float)MotionVal[7], (float)MotionVal[8]);
-    //MadgwickAHRSupdateIMU((float)MotionVal[0] * 0.0175, (float)MotionVal[1] * 0.0175, (float)MotionVal[2] * 0.0175,
-    //(float)MotionVal[3], (float)MotionVal[4], (float)MotionVal[5]);
+    //MadgwickAHRSupdate((float)MotionVal[0] * 0.0175, (float)MotionVal[1] * 0.0175, (float)MotionVal[2] * 0.0175, (float)MotionVal[3], (float)MotionVal[4],
+                      // (float)MotionVal[5], (float)MotionVal[6], (float)MotionVal[7], (float)MotionVal[8]);
+    MadgwickAHRSupdateIMU((float)MotionVal[0] * 0.0175, (float)MotionVal[1] * 0.0175, (float)MotionVal[2] * 0.0175,
+    (float)MotionVal[3], (float)MotionVal[4], (float)MotionVal[5]);
 }
 
 void IMU_GetYawPitchRoll(float *Angles, uint32_t S) {
