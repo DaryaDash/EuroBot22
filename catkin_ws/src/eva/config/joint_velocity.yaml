@@ -1,0 +1,20 @@
+eva:
+
+    joint_state_controller:
+        type: joint_state_controller/JointStateController
+        publish_rate: 100
+
+    left_joint_velocity_controller:
+        type: velocity_controllers/JointVelocityController
+        joint: left_wheel_to_base
+        pid: {p: 1.0, i: 0.0, d: 1.0}
+
+    back_joint_velocity_controller:
+        type: velocity_controllers/JointVelocityController
+        joint: back_wheel_to_base
+        pid: {p: 1.0, i: 0.0, d: 1.0}
+
+    right_joint_velocity_controller:
+        type: velocity_controllers/JointVelocityController
+        joint: right_wheel_to_base
+        pid: {p: 1.0, i: 0.0, d: 1.0}
