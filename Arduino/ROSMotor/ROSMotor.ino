@@ -12,8 +12,7 @@
 #define PIN_INBR 25 // Вывод управления направлением вращения мотора №3
 #define PIN_INBL 28 // Вывод управления направлением вращения мотора №3
 
- ros::NodeHandle nh;
-
+ ros::NodeHandle nh;  
 void messageCdRight (const std_msgs::Float64 &msg){
   if (msg.data<0) { 
   analogWrite(PIN_ENR, abs(msg.data));
