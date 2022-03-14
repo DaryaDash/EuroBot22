@@ -54,13 +54,13 @@ std_msgs::Float64 EnR_msg;
 std_msgs::Float64 EnL_msg;
 std_msgs::Float64 EnB_msg;
 
-ros::Publisher pub_EnR ("range_left", &EnR_msg);
-ros::Publisher pub_EnL ("range_right", &EnL_msg);
-ros::Publisher pub_EnB ("range_front", &EnB_msg);
+ros::Publisher pub_EnR ("range_left_enc", &EnR_msg);
+ros::Publisher pub_EnL ("range_right_enc", &EnL_msg);
+ros::Publisher pub_EnB ("range_front_enc", &EnB_msg);
 
-ros::Publisher pub_range_left ("range_left", &rangeL_msg);
-ros::Publisher pub_range_right ("range_right", &rangeR_msg);
-ros::Publisher pub_range_front ("range_front", &rangeF_msg);
+ros::Publisher pub_range_left ("range_left_ping", &rangeL_msg);
+ros::Publisher pub_range_right ("range_right_ping", &rangeR_msg);
+ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
 
 void messageCdRight (const std_msgs::Float64 &msg){
   if (msg.data<0) { 
