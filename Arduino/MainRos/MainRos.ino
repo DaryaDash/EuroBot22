@@ -16,6 +16,8 @@ int posL=0;
 int posR=0;
 int posB=0;
 
+ros::NodeHandle nh;
+
 int MotorSpeed []={3,4,5}; //Right,Back,Left
 int MotorDirectionRight [] = {22,25,29};//Right,Back,Left
 int MotorDirectionLeft [] = {24,28,27};//Right,Back,Left
@@ -43,7 +45,6 @@ volatile float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f; // quaternion of sens
 
 float angles[3];
 
-ros::NodeHandle nh;
 
 
 sensor_msgs::Range rangeR_msg;
