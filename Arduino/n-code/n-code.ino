@@ -18,7 +18,7 @@ int ENCB []={48,50,52}; /// left, back, right
 int posL=0;
 int posR=0;
 int posB=0;
-]std_msgs::Float64 EnR_msg;
+std_msgs::Float64 EnR_msg;
 std_msgs::Float64 EnL_msg;
 std_msgs::Float64 EnB_msg;
 
@@ -33,47 +33,45 @@ void readEncoder(){
   if(b > 0){
     posB++;
     
-  pub_range_front.publish (&EnB_msg);
   }
   else{
      if (b=0) {
        posB=posB;
-       Serial.print(posB);
-  Serial.println();
+       EnB_msg.data = posB;
+  
   }
   else {posB--;
-  Serial.print(posB);
-  Serial.println();
+   EnB_msg.data = posB;
+  
   }
     if(l > 0){
     posL++;
-    Serial.print(posL);
-   Serial.println();
+     EnL_msg.data = posL;
+   
   }
   else{
        if (l=0) {
        posL=posL;
-       Serial.print(posL);
-   Serial.println();
+        EnL_msg.data = posL;
+      
   }
   else {posL--;
-  Serial.print(posL);
-   Serial.println();
+  
   }
   }
     if(r > 0){
     posR++;
-    Serial.print(posR);
-  Serial.println();
+    EnR_msg.data = posR;
+    
   }
   else{
        if (r=0) {
-  Serial.print(posR);
-  Serial.println();
+         EnR_msg.data = posR;
+  ;
   }
   else {posR--;
-  Serial.print(posR);
-  Serial.println();}
+  EnR_msg.data = posR;
+   }
   }
 }
 }
@@ -99,10 +97,10 @@ pinMode(ENCB[i], INPUT);
   pinMode(PIN_IN4, OUTPUT);
   pinMode(PIN_IN5, OUTPUT);
   pinMode(PIN_IN6, OUTPUT);
- analogWrite(PIN_ENA, 160);
-   analogWrite(PIN_ENC, 160); // Устанавливаем скорость 1-го мотора
-   analogWrite(PIN_ENB, 160
-  ); // Устанавливаем скорость 1-го мотора
+ analogWrite(PIN_ENA, 80);
+   analogWrite(PIN_ENC, 80); // Устанавливаем скорость 1-го мотора
+   analogWrite(PIN_ENB, 80);
+ // Устанавливаем скорость 1-го мотора
     // Задаём направление для 1-го мотора
     digitalWrite(PIN_IN1, LOW);
     digitalWrite(PIN_IN2, HIGH);
@@ -118,6 +116,9 @@ pinMode(ENCB[i], INPUT);
 
 void loop() {
    readEncoder;
+    pub_EnB.publish (&EnB_msg);
+     pub_EnR.publish (&EnR_msg);
+      pub_EnL.publish (&EnL_msg);
   // put your main code here, to run repeatedly:
 
 }
