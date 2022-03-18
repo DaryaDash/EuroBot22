@@ -1,7 +1,7 @@
 
-#define ENCA 49
+#define ENCA 51
 
-#define ENCB 48
+#define ENCB 50
 
 
 int pos = 0;
@@ -16,8 +16,8 @@ void setup() {
 
 
 void loop() {
-  readEncoder;
-  Serial.print(pos);
+  readEncoder();
+  Serial.println(pos);
   //Serial.println(pos);
 //Serial.print("A");
  //Serial.print(digitalRead(ENCA)*5);
@@ -34,6 +34,7 @@ void loop() {
             }
 
 void readEncoder(){
+  Serial.print(" B");
   int b = digitalRead(ENCB);
   if(b > 0){
     pos++;
