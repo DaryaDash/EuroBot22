@@ -16,6 +16,8 @@ int posL=0;
 int posR=0;
 int posB=0;
 
+ros::NodeHandle nh;
+
 int MotorSpeed []={3,4,5}; //Right,Back,Left
 int MotorDirectionRight [] = {22,25,29};//Right,Back,Left
 int MotorDirectionLeft [] = {24,28,27};//Right,Back,Left
@@ -43,7 +45,6 @@ volatile float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f; // quaternion of sens
 
 float angles[3];
 
-ros::NodeHandle nh;
 
 
 sensor_msgs::Range rangeR_msg;
@@ -54,13 +55,13 @@ std_msgs::Float64 EnR_msg;
 std_msgs::Float64 EnL_msg;
 std_msgs::Float64 EnB_msg;
 
-ros::Publisher pub_EnR ("range_left", &EnR_msg);
-ros::Publisher pub_EnL ("range_right", &EnL_msg);
-ros::Publisher pub_EnB ("range_front", &EnB_msg);
+ros::Publisher pub_EnR ("range_left_enc", &EnR_msg);
+ros::Publisher pub_EnL ("range_right_enc", &EnL_msg);
+ros::Publisher pub_EnB ("range_front_enc", &EnB_msg);
 
-ros::Publisher pub_range_left ("range_left", &rangeL_msg);
-ros::Publisher pub_range_right ("range_right", &rangeR_msg);
-ros::Publisher pub_range_front ("range_front", &rangeF_msg);
+ros::Publisher pub_range_left ("range_left_ping", &rangeL_msg);
+ros::Publisher pub_range_right ("range_right_ping", &rangeR_msg);
+ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
 
 void messageCdRight (const std_msgs::Float64 &msg){
   if (msg.data<0) { 
