@@ -16,9 +16,9 @@ constexpr uint16_t PULSES_PER_REVOLUTION = 1920;
 
 namespace EncoderWiringPiISR {
 
- volatile long encoderPosition1;
- volatile long encoderPosition2;
- volatile long encoderPosition3;
+ volatile long encoder_position_1;
+ volatile long encoder_position_2;
+ volatile long encoder_position_3;
  volatile uint8_t encoder_state_1;
  volatile uint8_t encoder_state_2;
  volatile uint8_t encoder_state_3;
@@ -41,14 +41,14 @@ namespace EncoderWiringPiISR {
  }
 
  void encoderISR1(void) {
-  encoderISR(ENCODER_1_PIN_A, ENCODER_1_PIN_B, encoderPosition1, encoder_state_1);
+  encoderISR(ENCODER_1_PIN_A, ENCODER_1_PIN_B, encoder_position_1, encoder_state_1);
  }
 
  void encoderISR2(void) {
-  encoderISR(ENCODER_2_PIN_A, ENCODER_2_PIN_B, encoderPosition2, encoder_state_2);
+  encoderISR(ENCODER_2_PIN_A, ENCODER_2_PIN_B, encoder_position_2, encoder_state_2);
  }
  void encoderISR3(void) {
-  encoderISR(ENCODER_3_PIN_A, ENCODER_3_PIN_B, encoderPosition3, encoder_state_3);
+  encoderISR(ENCODER_3_PIN_A, ENCODER_3_PIN_B, encoder_position_3, encoder_state_3);
  }
 }
 

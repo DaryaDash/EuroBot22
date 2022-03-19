@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_ros
   rospy
   roscpp
+  std_msgs
   rviz
   urdf
 )
@@ -118,7 +119,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -141,11 +141,14 @@ include_directories(
 
 
 
-add_executable(eva src/encoders.cpp )
-target_link_libraries(encoders ${catkin_LIBRARIES} -lwiringPi -lpthread -lcrypt -lm -lrt -Wno-psabi)
+add_executable(eva_enc src/encoders.cpp )
+target_link_libraries(eva_enc ${catkin_LIBRARIES} -lwiringPi -lpthread -lcrypt -lm -lrt -Wno-psabi)
 
 
-
+include_directories(
+# include
+  ${catkin_INCLUDE_DIRS}
+)
 
 
 ## Rename C++ executable without prefix
