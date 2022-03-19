@@ -1,5 +1,5 @@
-#ifndef ENCODER_WIRING_PI_HPP_
-#define ENCODER_WIRING_PI_HPP_
+#ifndef ENCODER_WIRING_PI_H_
+#define ENCODER_WIRING_PI_H_
 
 #include <ros/ros.h>
 #include <wiringPi.h>
