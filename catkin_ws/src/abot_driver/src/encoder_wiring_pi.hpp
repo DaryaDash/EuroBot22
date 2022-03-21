@@ -4,12 +4,12 @@
 #include <ros/ros.h>
 #include <wiringPi.h>
 
-constexpr uint8_t ENCODER_1_PIN_A = 17; // Wiring pi 0 = BCM 17
-constexpr uint8_t ENCODER_1_PIN_B = 27; // Wiring pi 2 = BCM 27
-constexpr uint8_t ENCODER_2_PIN_A = 24; // Wiring pi 5 = BCM 24
-constexpr uint8_t ENCODER_2_PIN_B = 25; // Wiring pi 6 = BCM 25
-constexpr uint8_t ENCODER_3_PIN_A = 25; // Wiring pi 5 = BCM 24
-constexpr uint8_t ENCODER_3_PIN_B = 25; // Wiring pi 6 = BCM 25
+constexpr uint8_t ENCODER_1_PIN_A = 15; // Wiring pi 0 = BCM 17
+constexpr uint8_t ENCODER_1_PIN_B = 16; // Wiring pi 2 = BCM 27
+constexpr uint8_t ENCODER_2_PIN_A = 11; // Wiring pi 5 = BCM 24
+constexpr uint8_t ENCODER_2_PIN_B = 13; // Wiring pi 6 = BCM 25
+constexpr uint8_t ENCODER_3_PIN_A = 18; // Wiring pi 5 = BCM 24
+constexpr uint8_t ENCODER_3_PIN_B = 22; // Wiring pi 6 = BCM 25
 
 
 constexpr uint16_t PULSES_PER_REVOLUTION = 1920;
