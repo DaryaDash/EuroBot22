@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from std_msgs.msg import Float64MultiArray, Bool
 import rospy
-from time import sleep
 
 move_stop = True
 
@@ -20,9 +19,8 @@ def check_move_stop(data):
 def main():
     rospy.init_node('local_planer')
     pub = rospy.Publisher('must_move_local', Float64MultiArray, queue_size=1)
-    demo = [[1, 0.5], [0.5, -0.5], [-1, 2], [1, 1], [0, -0.7], [0, 0]]
+    demo = [[0, 0], [0.5, 0.5], [-1, 2], [1, 1], [0, -0.7]]
     while not rospy.is_shutdown():
-        
         if move_stop:
             if len(demo):
                 flarray = Float64MultiArray()
@@ -30,10 +28,10 @@ def main():
                 pub.publish(flarray)
                 print(demo[0])
                 demo.pop(0)
-            sleep(0.1)
+            rospy.sleep(0.1)
+            
         rospy.Subscriber('move_stop', Bool, check_move_stop)
-        sleep(0.1)
-        
+        rospy.sleep(0.1)
         # pub.publish(flarray)
         # print(1)
         

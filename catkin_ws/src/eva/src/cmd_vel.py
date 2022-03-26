@@ -60,7 +60,6 @@ class TwistToMotors():
         A= np.array([[-d/r, 1/r, 0], [-d/r, -1/(2*r), (-math.sin(meh))/r], [-d/r, -1/(2*r), (math.sin(meh))/r]])
         B= np.array([self.dr,self.dx, self.dy])
         X= A @ B
-        print(A)
         self.pub_lmotor.publish(X[0])
         self.pub_rmotor.publish(X[1])
         self.pub_bmotor.publish(X[2])

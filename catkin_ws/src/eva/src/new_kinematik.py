@@ -192,13 +192,72 @@ def move_local_odom(x, y):                            #принимает Х, У
 
 
 
+dt = 0.3
+
+def vel_odom():
+    global vel_left_odom, vel_right_odom
+    rospy.Subscriber('ENCL_POS', Float64, left_enc)
+    rospy.Subscriber('ENCR_POS', Float64, right_enc)
+    time.sleep(0.1)
+    left_last = l_enc
+    right_last = r_enc
+    time.sleep(1)
+    rospy.Subscriber('ENCL_POS', Float64, left_enc)
+    rospy.Subscriber('ENCR_POS', Float64, right_enc)
+    time.sleep(0.1)
+    vel_left_odom = (l_enc - left_last)
+    vel_right_odom = (r_enc - right_last)
+    print('L: ', vel_left_odom, 'R: ', vel_right_odom, 'L_enc: ', l_enc, "R_enc: ", r_enc)
+    return vel_left_odom, vel_right_odom
+
+
+
+
+kp= 0.7
+kd = 0.0
+ki = 0
+def corect_left_motor(prevErr):
+    vel_left_odom, vel_right_odom = vel_odom()
+    err = vel_left_odom - vel_right_odom
+    integ = err * dt
+    d = (err - prevErr) / dt
+    prevErr = err
+    output =  err * kp + ki*integ + kd * 3
+    pub_lmotor.publish(output)
+    print(output)
+    return prevErr
+
+
+
+
+
+
+
+def move_forward(distance):
+    rospy.Subscriber('ENCL_POS', Float64, left_enc)
+    rospy.Subscriber('ENCR_POS', Float64, right_enc)
+    v1, v2, v3 = v1v2v3(0, velocity*0.7)
+    err = (l_enc + r_enc)*0.1
+    v1 = v1 - err
+    v2 = v2 + err
+    if v1 > 255: v1 = 255
+    elif v1 < -255: v1 = -255
+    if v2 > 255: v2 = 255
+    elif v2 < -255: v2 = -255
+    pub_lmotor.publish(v1)
+    pub_rmotor.publish(v2)
+    print(v1, v2, l_enc, r_enc, err)
+    
+
+
+
 def main():                              #главный код
     global moveing
     rospy.init_node('kinematik')
-    print('x: ', x_pos)
-    print('y: ', y_pos)
-    print('theta: ', theta_pos)
-    print()
+    # print('x: ', x_pos)
+    # print('y: ', y_pos)
+    # print('theta: ', theta_pos)
+    # print()
    # kinematik_local(100, 250)
    # time.sleep(2)
    # stop()
@@ -206,10 +265,19 @@ def main():                              #главный код
    # kinematik_local(100, -250)
    # pub_bmotor.publish(200)
    # time.sleep(2)
-    move_local_time(-0.7,3)
-    time.sleep(2)
-    move_local_time(0.7,-3)
+    # move_local_time(-0.7,3)
+    # time.sleep(2)
+    # move_local_time(0.7,-3)
+    #pub_rmotor.publish(150)
+    prevErr = 0
+    while not rospy.is_shutdown():
+        move_forward(10)
+        time.sleep(0.3)
     stop()
+
+
+
+
 
 
 

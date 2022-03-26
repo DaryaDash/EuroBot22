@@ -8,10 +8,7 @@ project(omni3ros_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  gazebo_ros
   rospy
-  rviz
-  urdf
 )
 
 ## System dependencies are found with CMake's conventions

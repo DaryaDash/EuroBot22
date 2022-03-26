@@ -6,7 +6,6 @@ from geometry_msgs.msg import Twist
 from math import sin, cos, sqrt
 import numpy as np
 import math
-from time import sleep
 
 #############################################################
 #############################################################
@@ -27,7 +26,6 @@ class TwistToMotors():
         self.pub_lmotor = rospy.Publisher('/open_base/left_joint_velocity_controller/command', Float64, queue_size=10)
         self.pub_rmotor = rospy.Publisher('/open_base/right_joint_velocity_controller/command', Float64, queue_size=10)
         self.pub_bmotor = rospy.Publisher('/open_base/back_joint_velocity_controller/command', Float64, queue_size=10)
-        self.pub = rospy.Publisher('move_stop', Bool, queue_size=1)
         rospy.Subscriber('cmd_vel', Twist, self.twistCallback)
     
     
@@ -62,8 +60,6 @@ class TwistToMotors():
         A= np.array([[-d/r, 1/r, 0], [-d/r, -1/(2*r), (-math.sin(meh))/r], [-d/r, -1/(2*r), (math.sin(meh))/r]])
         B= np.array([self.dr,self.dx, self.dy])
         X= A @ B
-        print(A)
-
         self.pub_lmotor.publish(X[0])
         self.pub_rmotor.publish(X[1])
         self.pub_bmotor.publish(X[2])
@@ -82,25 +78,21 @@ class TwistToMotors():
 
 
 l = 0.1          #длинна луча
-velocity = 5    #скорость
+velocity = 100    #скорость
 
 
 class MyKinematik():
     def __init__(self):
-        self.move_stop = True
         while not rospy.is_shutdown():
-            sleep(0.1)
-            if self.move_stop:
-                # print(1)
-                rospy.init_node("twist_to_motors")
-                rospy.Subscriber('must_move_local', Float64MultiArray, self.move_local)
-                rospy.Subscriber('must_move_world', Float64MultiArray, self.move_world)
+            # print(1)
+            rospy.init_node("twist_to_motors")
+            rospy.Subscriber('must_move_local', Float64MultiArray, self.move_local)
+            rospy.Subscriber('must_move_world', Float64MultiArray, self.move_world)
 
-                self.pub_lmotor = rospy.Publisher('/open_base/left_joint_velocity_controller/command', Float64, queue_size=10)
-                self.pub_rmotor = rospy.Publisher('/open_base/right_joint_velocity_controller/command', Float64, queue_size=10)
-                self.pub_bmotor = rospy.Publisher('/open_base/back_joint_velocity_controller/command', Float64, queue_size=10)
-                self.pub = rospy.Publisher('move_stop', Bool, queue_size=1)
-                
+            self.pub_lmotor = rospy.Publisher('/open_base/left_joint_velocity_controller/command', Float64, queue_size=10)
+            self.pub_rmotor = rospy.Publisher('/open_base/right_joint_velocity_controller/command', Float64, queue_size=10)
+            self.pub_bmotor = rospy.Publisher('/open_base/back_joint_velocity_controller/command', Float64, queue_size=10)
+            self.pub = rospy.Publisher('move_stop', Bool, queue_size=1)
             
     def x_y_local(self, x, y, corner_absolute=0):
         x_local = cos(corner_absolute)*x + sin(corner_absolute)*y
@@ -126,7 +118,6 @@ class MyKinematik():
 
     def move_local(self, data):
         self.pub.publish(Bool(False))
-        self.move_stop = False
         x_plus_y = data.data[0] + data.data[1]
         xv = velocity * (data.data[0] / x_plus_y)
         yv = velocity * (data.data[1] / x_plus_y)
@@ -140,14 +131,12 @@ class MyKinematik():
         self.pub_rmotor.publish(v2)
         self.pub_bmotor.publish(v3)
         print(v1, v2, v3)
-        sleep(time*5)
+        rospy.sleep(time)
         self.pub_lmotor.publish(0)
         self.pub_rmotor.publish(0)
         self.pub_bmotor.publish(0)
         print('stop')
         self.pub.publish(Bool(True))     #говорит локал_планеру, что остановился
-        self.move_stop = True
-        sleep(0.1)
 
     def move_world(self, data):
         self.pub.publish(Bool(False))
@@ -165,7 +154,7 @@ class MyKinematik():
         self.pub_lmotor.publish(v1)
         self.pub_rmotor.publish(v2)
         self.pub_bmotor.publish(v3)
-        sleep(time)
+        rospy.sleep(time)
         print('stop')
         self.pub.publish(Bool(True))     #говорит локал_планеру, что остановился
 

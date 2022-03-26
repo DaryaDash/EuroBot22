@@ -15,7 +15,7 @@
 	back_joint_velocity_controller
 	right_joint_velocity_controller
 	"/>
-	<node name="pub_cmdvel" pkg="omni3ros_pkg" type="cmd_vel.py"/>
+	<node name="pub_cmdvel" pkg="omni3ros_pkg" type="my_cmd_vel.py"/>
 	<node name="pub_tf" pkg="omni3ros_pkg" type="odom_pub.py"/>
 	
 
