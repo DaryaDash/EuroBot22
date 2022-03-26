@@ -2,7 +2,8 @@
 #include <sensor_msgs/Range.h>//PING msgs
 #include <std_msgs/Float64.h>//Motor msg
 #include <std_msgs/Bool.h>         // navX-Sensor Register Definition header file
-#include <geometry_msgs/Twist.h>
+
+
 
 
 ros::NodeHandle nh;
@@ -47,7 +48,7 @@ ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
   //  //Serial.println("Cas1");
   //   break;
   // }
-void EncToZero (float pos []){
+/*void EncToZero (float pos []){
   pos [0] = 0;
   pos [1] = 0;
 }
@@ -55,15 +56,14 @@ float PosToMillimeter( float pos[], int enc){
 float mm;
 mm = pos[enc] / 0.2;
 return mm;
-}
-int right_vel= 0;
-int left_vel= 0;
+}*/
+int right_vel= 155;
+int left_vel= 155;
 int forward_vel= 0;
-ros::Subscriber<std_msgs::Bool> ENCZero("ENC_zero", &EncToZero);
-ros::Subscriber<geometry_msgs::Twist> subX("linear_x", &messageLinearX);
-ros::Subscriber<geometry_msgs::Twist> subY("linear_y", &messageLinearY);
-ros::Subscriber<geometry_msgs::Twist> subtargyaw("target_yaw", &messageTargetAngularZ);
-ros::Subscriber<geometry_msgs::Twist> subyaw("yaw", &messageAngularZ);
+ros::Subscriber<std_msgs::Float64> subX("linear_x", &messageLinearX);
+ros::Subscriber<std_msgs::Float64> subY("linear_y", &messageLinearY);
+ros::Subscriber<std_msgs::Float64> subtargyaw("target_yaw", &messageTargetAngularZ);
+ros::Subscriber<std_msgs::Float64> subyaw("yaw", &messageAngularZ);
 
 ros::Subscriber<std_msgs::Bool> substop("stop", &StopCb);
 
@@ -80,10 +80,10 @@ void StopCb (const std_msgs::Bool &msg){
   digitalWrite(MotorDirectionLeft [2], LOW);
   }
 }
-void messageLinearY (const geometry_msgs::Twist &msg){
+void messageLinearY (const std_msgs::Float64 &msg){
   EncToZero(pos);
-  while (pos[0]<abs(msg.linear.y)){
-  if (msg.linear.y>0) {
+  while (abs(pos[0])<abs(msg.data)){
+  if (msg.data>0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -94,7 +94,7 @@ void messageLinearY (const geometry_msgs::Twist &msg){
   digitalWrite(MotorDirectionRight [2], HIGH);
   digitalWrite(MotorDirectionLeft [2], LOW);
   }
-  if (msg.linear.y<0) {
+  if (msg.data<0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -117,10 +117,10 @@ void messageLinearY (const geometry_msgs::Twist &msg){
   digitalWrite(MotorDirectionLeft [2], LOW);
   EncToZero(pos);
   }
-void messageLinearX (const geometry_msgs::Twist &msg){
+void messageLinearX (const std_msgs::Float64 &msg){
    EncToZero(pos);
-  while (pos[0]<abs(msg.linear.x)){
-  if (msg.linear.x>0) {
+  while (pos[0]<abs(msg.data)){
+  if (msg.data>0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -131,7 +131,7 @@ void messageLinearX (const geometry_msgs::Twist &msg){
   digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], HIGH);
   }
-  if (msg.linear.x<0) {
+  if (msg.data<0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -156,13 +156,13 @@ void messageLinearX (const geometry_msgs::Twist &msg){
   EncToZero(pos);
   }
 
-void messageAngularZ (const geometry_msgs::Twist &msg){
-  CurrentAngle = msg.angular.z;
+void messageAngularZ (const std_msgs::Float64 &msg){
+  CurrentAngle = msg.data;
 }
-void messageTargetAngularZ (const geometry_msgs::Twist &msg){
+void messageTargetAngularZ (const std_msgs::Float64 &msg){
    EncToZero(pos);
-  while (CurrentAngle<abs(msg.angular.z)){
-  if (msg.angular.z>0) {
+  while (CurrentAngle<abs(msg.data)){
+  if (msg.data>0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -173,7 +173,7 @@ void messageTargetAngularZ (const geometry_msgs::Twist &msg){
   digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], HIGH);
   }
-  if (msg.angular.z<0) {
+  if (msg.data<0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
