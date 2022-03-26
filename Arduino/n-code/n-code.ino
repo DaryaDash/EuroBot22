@@ -1,14 +1,13 @@
 
-#include <PinChangeInterrupt.h>
-#define ENCA 51
+#define ENCA 19
 
-#define ENCB 50
+#define ENCB 18
 
 
 int pos = 0;
 
 void readEncoder(){
-  Serial.println("work");
+ 
   int b = digitalRead(ENCB);
   if(b > 0){
     pos++;
@@ -29,20 +28,8 @@ void setup() {
 
 
 void loop() {
-}
-  //Serial.println(pos);
-/*Serial.print("A");
- Serial.print(digitalRead(ENCA)*5);
- Serial.print(" B");
- Serial.println(digitalRead(ENCB)*5);
- /*if (digitalRead(ENCA)>0){
-   pos ++;
+Serial.println(pos);
  }
- if (digitalRead(ENCB)>0){
-   pos--;
- }
- Serial.println(pos);
- }*/
             
 
 
