@@ -67,7 +67,7 @@ ros::Subscriber<geometry_msgs::Twist> subyaw("yaw", &messageAngularZ);
 
 ros::Subscriber<std_msgs::Bool> substop("stop", &StopCb);
 
-void StopCb (const std::Bool &msg){
+void StopCb (const std_msgs::Bool &msg){
   if (msg.data == true){
     analogWrite(MotorSpeed [0], 0);
   analogWrite(MotorSpeed [2], 0);
@@ -91,21 +91,30 @@ void messageLinearY (const geometry_msgs::Twist &msg){
   digitalWrite(MotorDirectionLeft [0], LOW);
   digitalWrite(MotorDirectionRight [1], LOW);
   digitalWrite(MotorDirectionLeft [1], LOW);
-  digitalWrite(MotorDirectionRight [2], LOW);
-  digitalWrite(MotorDirectionLeft [2], HIGH);
+  digitalWrite(MotorDirectionRight [2], HIGH);
+  digitalWrite(MotorDirectionLeft [2], LOW);
   }
   if (msg.linear.y<0) {
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
-  digitalWrite(MotorDirectionRight [0], LOW);
+ digitalWrite(MotorDirectionRight [0], LOW);
   digitalWrite(MotorDirectionLeft [0], HIGH);
   digitalWrite(MotorDirectionRight [1], LOW);
   digitalWrite(MotorDirectionLeft [1], LOW);
-  digitalWrite(MotorDirectionRight [2], HIGH);
+  digitalWrite(MotorDirectionRight [2], LOW);
+  digitalWrite(MotorDirectionLeft [2], HIGH);
+  }
+  }
+    analogWrite(MotorSpeed [0], 0);
+  analogWrite(MotorSpeed [2], 0);
+  analogWrite(MotorSpeed [1], 0);
+  digitalWrite(MotorDirectionRight [0], LOW);
+  digitalWrite(MotorDirectionLeft [0], LOW);
+  digitalWrite(MotorDirectionRight [1], LOW);
+  digitalWrite(MotorDirectionLeft [1], LOW);
+  digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], LOW);
-  }
-  }
   EncToZero(pos);
   }
 void messageLinearX (const geometry_msgs::Twist &msg){
@@ -135,6 +144,15 @@ void messageLinearX (const geometry_msgs::Twist &msg){
   }
 
   }
+  analogWrite(MotorSpeed [0], 0);
+  analogWrite(MotorSpeed [2], 0);
+  analogWrite(MotorSpeed [1], 0);
+  digitalWrite(MotorDirectionRight [0], LOW);
+  digitalWrite(MotorDirectionLeft [0], LOW);
+  digitalWrite(MotorDirectionRight [1], LOW);
+  digitalWrite(MotorDirectionLeft [1], LOW);
+  digitalWrite(MotorDirectionRight [2], LOW);
+  digitalWrite(MotorDirectionLeft [2], LOW);
   EncToZero(pos);
   }
 
@@ -167,6 +185,15 @@ void messageTargetAngularZ (const geometry_msgs::Twist &msg){
   digitalWrite(MotorDirectionLeft [2], LOW);
   }
   }
+   analogWrite(MotorSpeed [0], 0);
+  analogWrite(MotorSpeed [2], 0);
+  analogWrite(MotorSpeed [1], 0);
+  digitalWrite(MotorDirectionRight [0], LOW);
+  digitalWrite(MotorDirectionLeft [0], LOW);
+  digitalWrite(MotorDirectionRight [1], LOW);
+  digitalWrite(MotorDirectionLeft [1], LOW);
+  digitalWrite(MotorDirectionRight [2], LOW);
+  digitalWrite(MotorDirectionLeft [2], LOW);
   EncToZero(pos);
   }
 
