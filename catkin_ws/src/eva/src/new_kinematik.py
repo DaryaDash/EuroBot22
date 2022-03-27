@@ -4,19 +4,35 @@ import rospy
 import roslib
 from std_msgs.msg import Float64, Float64MultiArray, Bool
 import time
-
+import serial
 
 l = 0.1          #длинна луча
 velocity = 255    #скорость
 cornerMotor_to_distance = 0.0007412223
 
-x_pos, y_pos, theta_pos, l_enc, r_enc = 0,0,0,0,0
+x_pos, y_pos, theta_pos, l_enc, r_enc, yaw = 0,0,0,0,0,0
 
-
+pub_linear_y = rospy.Publisher('linear_y', Float64, queue_size=10)
 pub_lmotor = rospy.Publisher('v_left', Float64, queue_size=10)
 pub_bmotor = rospy.Publisher('v_back', Float64, queue_size=10)
 pub_rmotor = rospy.Publisher('v_right', Float64, queue_size=10)
 pub = rospy.Publisher('moveing', Bool, queue_size=1)
+
+
+
+try:
+    ser_navx = serial.Serial('/dev/ttyACM0')
+except:
+    try:
+        ser_navx = serial.Serial('/dev/ttyACM1')
+    except:
+        try:
+            ser_navx = serial.Serial('/dev/ttyACM2')
+        except:
+            ser_navx = serial.Serial('/dev/ttyACM3')
+
+
+
 
 def x_y_local(x, y, corner_absolute=0):                       #перевод из мировых координат в локальные(относительно позиции робота)
     x_local = cos(corner_absolute)*x + sin(corner_absolute)*y
@@ -29,10 +45,10 @@ def x_y_world(x, y, corner_absolute=0):                      #перевод и�
     return x_world, y_world
 
 def v1v2v3(x_local, y_local, corner_change=0):             #формулы для расчета скоростей, относительно скорости Х и У
-    v1 = -x_local/2 - sqrt(3)*y_local/2 + l*corner_change
-    v2 = x_local + l*corner_change
-    v3 = -x_local/2 + sqrt(3)*y_local/2 + l*corner_change
-    return v1, -v3, v2
+    v_l = -x_local/2 - sqrt(3)*y_local/2 + l*corner_change
+    v_b = x_local + l*corner_change
+    v_r = -x_local/2 + sqrt(3)*y_local/2 + l*corner_change
+    return v_l, v_r, v_b
 
 def v1v2v3_to_xylocal(v1, v2, v3):                       #скорости на моторы перевести в координаты Х У (не используется)
     x_local = (2*v2 - v1 - v3)/3
@@ -44,6 +60,7 @@ def kinematik_local(xv, yv, corner_to_change=0):                   #публик
     global moveing
     moveing = True
     v1, v2, v3 = v1v2v3(xv, yv, corner_to_change)
+    v2 = -v2
     pub_lmotor.publish(v1)
     pub_rmotor.publish(v3)
     pub_bmotor.publish(v2)
@@ -162,6 +179,8 @@ def get_position_odom(odom_l, odom_r, odom_b):
     y_pos = (sqrt(3)*odom_r - sqrt(3)*odom_l)/3 * cornerMotor_to_distance
     theta_pos = (odom_l + odom_r + odom_b)/3*l
 
+def get_yaw_navx():
+    return float(ser_navx.readline()[2:9])
 
 
 def left_enc(data):
@@ -169,7 +188,7 @@ def left_enc(data):
     l_enc = data.data
 def right_enc(data):
     global r_enc
-    r_enc = data.data    
+    r_enc = data.data
 
 
 def move_local_odom(x, y):                            #принимает Х, У; движется по координатам и останавливается 
@@ -233,7 +252,7 @@ def corect_left_motor(prevErr):
 
 
 
-def move_forward(distance):
+def move_forward_odom(distance):
     rospy.Subscriber('ENCL_POS', Float64, left_enc)
     rospy.Subscriber('ENCR_POS', Float64, right_enc)
     v1, v2, v3 = v1v2v3(0, velocity*0.7)
@@ -248,6 +267,62 @@ def move_forward(distance):
     pub_rmotor.publish(v2)
     print(v1, v2, l_enc, r_enc, err)
     
+
+
+
+
+def move_forward_navx(target_distance, target_yaw=0):
+    v_left, v_right, v_back = v1v2v3(0, velocity)
+    _, target_r,_ = v1v2v3(0, target_distance)
+    target_r = target_r / cornerMotor_to_distance
+    while r_enc < target_r*0.95 and not rospy.is_shutdown():
+        now_yaw = get_yaw_navx()
+        err = (now_yaw - target_yaw)*0.005
+        v_left = velocity*(1-err)
+        v_right = velocity*(-1-err)
+        if v_left > 255: v_left = 255
+        elif v_left < -255: v_left = -255
+        if v_right > 255: v_right = 255
+        elif v_right < -255: v_right = -255
+        for i in range(10):
+            pub_lmotor.publish(v_left)
+            pub_rmotor.publish(-v_right)
+            pub_bmotor.publish(0)
+        rospy.Subscriber('ENCR_POS', Float64, right_enc)
+        print(v_left, v_right, now_yaw, err)
+    stop()
+
+
+
+def move_navx(target_x, target_y, target_yaw=0):
+    distance = sqrt(target_x**2+target_y**2)
+    time_move = (distance / velocity ) * 100
+    xv = (target_x/distance)*velocity
+    yv = (target_y/distance)*velocity
+    v_l, v_r, v_b = v1v2v3(xv, yv)
+    rospy.Subscriber('ENCR_POS', Float64, right_enc)
+    _, target_r,_ = v1v2v3(target_x, target_y)
+    target_r = target_r / cornerMotor_to_distance
+    while r_enc < target_r*0.95 and not rospy.is_shutdown():
+        now_yaw = get_yaw_navx()
+        err = (now_yaw - target_yaw)*0.005
+        v_left = v_l+err*velocity
+        v_right = v_r+err*velocity
+        v_back = v_b+err*velocity
+        if v_left > 255: v_left = 255
+        elif v_left < -255: v_left = -255
+        if v_right > 255: v_right = 255
+        elif v_right < -255: v_right = -255
+        if v_back > 255: v_back = 255
+        elif v_back < -255: v_back = -255
+        for i in range(10):
+            pub_lmotor.publish(v_left)
+            pub_rmotor.publish(-v_right)
+            pub_bmotor.publish(v_back)
+        rospy.Subscriber('ENCR_POS', Float64, right_enc)
+        print(v_left, v_right, v_back, now_yaw, err)
+    stop()
+
 
 
 
@@ -269,10 +344,13 @@ def main():                              #главный код
     # time.sleep(2)
     # move_local_time(0.7,-3)
     #pub_rmotor.publish(150)
-    prevErr = 0
-    while not rospy.is_shutdown():
-        move_forward(10)
-        time.sleep(0.3)
+    #prevErr = 0
+    #while not rospy.is_shutdown():
+    move_navx(0,10)
+    time.sleep(3)
+    #pub_linear_y.publish(50)
+
+
     stop()
 
 

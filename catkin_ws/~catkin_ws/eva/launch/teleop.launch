@@ -1,5 +1,0 @@
-<launch>
-	
-	<node pkg="eva" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen">
-	</node>
-</launch>

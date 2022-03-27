@@ -1,5 +1,0 @@
-<launch>
-	
-	<node pkg="eva" type="encoders.cpp" name="encoders" output="screen">
-	</node>
-</launch>
