@@ -8,7 +8,7 @@ import serial
 
 l = 0.1          #длинна луча
 velocity = 200    #скорость
-cornerMotor_to_distance = 0.0007412223
+cornerMotor_to_distance = 2240
 
 x_pos, y_pos, theta_pos, l_enc, r_enc, yaw = 0,0,0,0,0,0
 
@@ -21,15 +21,15 @@ pub = rospy.Publisher('moveing', Bool, queue_size=1)
 
 
 try:
-    ser_navx = serial.Serial('/dev/ttyACM0')
+    ser_navx = serial.Serial('/dev/ttyACM3')
 except:
     try:
-        ser_navx = serial.Serial('/dev/ttyACM1')
+        ser_navx = serial.Serial('/dev/ttyACM2')
     except:
         try:
-            ser_navx = serial.Serial('/dev/ttyACM2')
+            ser_navx = serial.Serial('/dev/ttyACM1')
         except:
-            ser_navx = serial.Serial('/dev/ttyACM3')
+            ser_navx = serial.Serial('/dev/ttyACM0')
 
 
 
@@ -284,12 +284,10 @@ def move_forward_navx(target_distance, target_yaw=0):
         elif v_left < -255: v_left = -255
         if v_right > 255: v_right = 255
         elif v_right < -255: v_right = -255
-        for i in range(1):
-            pub_lmotor.publish(v_left)
-            pub_rmotor.publish(-v_right)
-            pub_bmotor.publish(0)
+        pub_lmotor.publish(v_left)
+        pub_rmotor.publish(-v_right)
+        pub_bmotor.publish(0)
         rospy.Subscriber('ENCR_POS', Float64, right_enc)
-        time.sleep(0.1)
         print(v_left, v_right, now_yaw, err)
     stop()
 
@@ -305,10 +303,13 @@ def move_navx(target_x, target_y, target_yaw=0):
     first_r_enc = r_enc
     _, target_r,_ = v1v2v3(target_x, target_y)
     print(target_r)
-    target_r = target_r / cornerMotor_to_distance
-    while (-r_enc+first_r_enc) < target_r*0.95 and not rospy.is_shutdown():
-        now_yaw = get_yaw_navx()
-        err = -(now_yaw - target_yaw)*0.02
+    target_r = target_r * cornerMotor_to_distance
+    while abs(-r_enc+first_r_enc) < abs(target_r) and not rospy.is_shutdown():
+        try:
+            now_yaw = get_yaw_navx()
+        except:
+            pass
+        err = (now_yaw - target_yaw)*0.02
         v_left = v_l+err*velocity
         v_right = v_r+err*velocity
         v_back = v_b+err*velocity
@@ -318,13 +319,12 @@ def move_navx(target_x, target_y, target_yaw=0):
         elif v_right < -255: v_right = -255
         if v_back > 255: v_back = 255
         elif v_back < -255: v_back = -255
-        for i in range(1):
-            pub_lmotor.publish(v_left*0.6)
-            pub_rmotor.publish(-v_right)
-            pub_bmotor.publish(v_back*0.6)
+        pub_lmotor.publish(v_left*0.6)
+        pub_rmotor.publish(-v_right)
+        pub_bmotor.publish(v_back*0.6)
         rospy.Subscriber('ENCR_POS', Float64, right_enc)
-        print(v_left*0.6, v_right, v_back*0.6, now_yaw, err)
-    print(r_enc,first_r_enc,  target_r)
+        print(now_yaw, v_left*0.6, v_right, v_back*0.6)
+        print(r_enc,first_r_enc,  target_r)
         #time.sleep(0.1)
     stop()
 
@@ -351,9 +351,20 @@ def main():                              #главный код
     #pub_rmotor.publish(150)
     #prevErr = 0
     #while not rospy.is_shutdown():
-    move_navx(0,7)
+    move_navx(-0.5,0)
 #    move_navx(2,2, -90)
-    time.sleep(3)
+    time.sleep(1)
+    move_navx(-1,0, -90)
+    time.sleep(1)
+    move_navx(0.2,0, 30)
+    time.sleep(1)
+    move_navx(-0.3, 0.5, -50)
+    time.sleep(1)
+    move_navx(0,-1)
+    time.sleep(1)
+    move_navx(-0.3, 0.5)
+    time.sleep(1)
+    move_navx(-0.7,-0.2, 45)
     #while not rospy.is_shutdown():
     #    print(ser_navx.readline())
     #pub_linear_y.publish(50)
