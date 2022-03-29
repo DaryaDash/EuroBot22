@@ -41,9 +41,9 @@ attachInterrupt(digitalPinToInterrupt(ENCA[1]),readEncoder<1>,RISING);
   pinMode(PIN_IN4, OUTPUT);
   pinMode(PIN_IN5, OUTPUT);
   pinMode(PIN_IN6, OUTPUT);
- analogWrite(PIN_ENA,120);
+ analogWrite(PIN_ENA,255);
    analogWrite(PIN_ENC, 0); // Устанавливаем скорость 1-го мотора
-   analogWrite(PIN_ENB, 0);
+   analogWrite(PIN_ENB, 255);
  // Устанавливаем скорость 1-го мотора
     // Задаём направление для 1-го мотора
     digitalWrite(PIN_IN1, LOW);

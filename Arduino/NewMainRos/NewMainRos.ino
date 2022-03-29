@@ -10,6 +10,7 @@ ros::NodeHandle nh;
 
 int ENCA[]={19,2};//right left
 int ENCB[]={18,3};
+float mm = 0;
 float pos[]= {0,0};
 float CurrentAngle=0;
 
@@ -48,15 +49,16 @@ ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
   //  //Serial.println("Cas1");
   //   break;
   // }
-/*void EncToZero (float pos []){
+void EncToZero (float pos []){
   pos [0] = 0;
   pos [1] = 0;
 }
-float PosToMillimeter( float pos[], int enc){
-float mm;
-mm = pos[enc] / 0.2;
-return mm;
-}*/
+
+float EncTomm(float pos [], float mm, int enc){
+  mm = abs(pos [enc]*0.02) ;
+  return mm;
+}
+
 int right_vel= 155;
 int left_vel= 155;
 int forward_vel= 0;
@@ -68,8 +70,9 @@ ros::Subscriber<std_msgs::Float64> subyaw("yaw", &messageAngularZ);
 ros::Subscriber<std_msgs::Bool> substop("stop", &StopCb);
 
 void StopCb (const std_msgs::Bool &msg){
+EncToZero(pos);
   if (msg.data == true){
-    analogWrite(MotorSpeed [0], 0);
+  analogWrite(MotorSpeed [0], 0);
   analogWrite(MotorSpeed [2], 0);
   analogWrite(MotorSpeed [1], 0);
   digitalWrite(MotorDirectionRight [0], LOW);
@@ -81,9 +84,9 @@ void StopCb (const std_msgs::Bool &msg){
   }
 }
 void messageLinearY (const std_msgs::Float64 &msg){
-  EncToZero(pos);
-  while (abs(pos[0])<abs(msg.data)){
+EncToZero(pos);
   if (msg.data>0) {
+
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -98,29 +101,20 @@ void messageLinearY (const std_msgs::Float64 &msg){
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
- digitalWrite(MotorDirectionRight [0], LOW);
+  digitalWrite(MotorDirectionRight [0], LOW);
   digitalWrite(MotorDirectionLeft [0], HIGH);
   digitalWrite(MotorDirectionRight [1], LOW);
   digitalWrite(MotorDirectionLeft [1], LOW);
   digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], HIGH);
   }
-  }
-    analogWrite(MotorSpeed [0], 0);
-  analogWrite(MotorSpeed [2], 0);
-  analogWrite(MotorSpeed [1], 0);
-  digitalWrite(MotorDirectionRight [0], LOW);
-  digitalWrite(MotorDirectionLeft [0], LOW);
-  digitalWrite(MotorDirectionRight [1], LOW);
-  digitalWrite(MotorDirectionLeft [1], LOW);
-  digitalWrite(MotorDirectionRight [2], LOW);
-  digitalWrite(MotorDirectionLeft [2], LOW);
-  EncToZero(pos);
-  }
+}
+
+
 void messageLinearX (const std_msgs::Float64 &msg){
-   EncToZero(pos);
-  while (pos[0]<abs(msg.data)){
+EncToZero(pos);
   if (msg.data>0) {
+  if (EncTomm(pos, mm, 1)< abs(msg.data)){
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -131,20 +125,8 @@ void messageLinearX (const std_msgs::Float64 &msg){
   digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], HIGH);
   }
-  if (msg.data<0) {
-  analogWrite(MotorSpeed [0], right_vel);
-  analogWrite(MotorSpeed [2], left_vel);
-  analogWrite(MotorSpeed [1], 0);
-  digitalWrite(MotorDirectionRight [0], LOW);
-  digitalWrite(MotorDirectionLeft [0], HIGH);
-  digitalWrite(MotorDirectionRight [1], LOW);
-  digitalWrite(MotorDirectionLeft [1], HIGH);
-  digitalWrite(MotorDirectionRight [2], HIGH);
-  digitalWrite(MotorDirectionLeft [2], LOW);
-  }
-
-  }
-  analogWrite(MotorSpeed [0], 0);
+    else {
+ analogWrite(MotorSpeed [0], 0);
   analogWrite(MotorSpeed [2], 0);
   analogWrite(MotorSpeed [1], 0);
   digitalWrite(MotorDirectionRight [0], LOW);
@@ -153,14 +135,38 @@ void messageLinearX (const std_msgs::Float64 &msg){
   digitalWrite(MotorDirectionLeft [1], LOW);
   digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], LOW);
-  EncToZero(pos);
+  }
+  }
+  if (msg.data<0) {
+    if (EncTomm(pos, mm, 1)< abs(msg.data)){
+  analogWrite(MotorSpeed [0], right_vel);
+  analogWrite(MotorSpeed [2], left_vel);
+  analogWrite(MotorSpeed [1], 0);
+  digitalWrite(MotorDirectionRight [0], LOW);
+  digitalWrite(MotorDirectionLeft [0], HIGH);
+  digitalWrite(MotorDirectionRight [1], LOW);
+  digitalWrite(MotorDirectionLeft [1], HIGH);
+  digitalWrite(MotorDirectionRight [2], HIGH);
+  digitalWrite(MotorDirectionLeft [2], LOW);}
+  else {
+ analogWrite(MotorSpeed [0], 0);
+  analogWrite(MotorSpeed [2], 0);
+  analogWrite(MotorSpeed [1], 0);
+  digitalWrite(MotorDirectionRight [0], LOW);
+  digitalWrite(MotorDirectionLeft [0], LOW);
+  digitalWrite(MotorDirectionRight [1], LOW);
+  digitalWrite(MotorDirectionLeft [1], LOW);
+  digitalWrite(MotorDirectionRight [2], LOW);
+  digitalWrite(MotorDirectionLeft [2], LOW);    
+  }
+  }
   }
 
 void messageAngularZ (const std_msgs::Float64 &msg){
   CurrentAngle = msg.data;
 }
 void messageTargetAngularZ (const std_msgs::Float64 &msg){
-   EncToZero(pos);
+ 
   while (CurrentAngle<abs(msg.data)){
   if (msg.data>0) {
   analogWrite(MotorSpeed [0], right_vel);
@@ -185,22 +191,13 @@ void messageTargetAngularZ (const std_msgs::Float64 &msg){
   digitalWrite(MotorDirectionLeft [2], LOW);
   }
   }
-   analogWrite(MotorSpeed [0], 0);
-  analogWrite(MotorSpeed [2], 0);
-  analogWrite(MotorSpeed [1], 0);
-  digitalWrite(MotorDirectionRight [0], LOW);
-  digitalWrite(MotorDirectionLeft [0], LOW);
-  digitalWrite(MotorDirectionRight [1], LOW);
-  digitalWrite(MotorDirectionLeft [1], LOW);
-  digitalWrite(MotorDirectionRight [2], LOW);
-  digitalWrite(MotorDirectionLeft [2], LOW);
-  EncToZero(pos);
+  
   }
 
 void setup() {
 nh.initNode();
-attachInterrupt(digitalPinToInterrupt(21),readEncoder<0>,RISING);
-attachInterrupt(digitalPinToInterrupt(19),readEncoder<1>,RISING);
+attachInterrupt(digitalPinToInterrupt(ENCA[0]),readEncoder<0>,RISING);
+attachInterrupt(digitalPinToInterrupt(ENCA[1]),readEncoder<1>,RISING);
 
 nh.subscribe(subX);
 nh.subscribe(subY);
@@ -269,7 +266,6 @@ void loop() {
     ping(i); 
 
   }
-
 ENCL_msg.data=pos[0];
 pub_ENCL_POS.publish (&ENCL_msg);
 ENCR_msg.data=pos[1];

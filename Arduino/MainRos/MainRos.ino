@@ -27,8 +27,10 @@ sensor_msgs::Range rangeF_msg;
 std_msgs::Float64 ENCR_msg;
 std_msgs::Float64 ENCL_msg;
 
+
 ros::Publisher pub_ENCR_POS ("ENCR_POS", &ENCR_msg);
 ros::Publisher pub_ENCL_POS ("ENCL_POS", &ENCL_msg);
+
 
 ros::Publisher pub_range_left ("range_left_ping", &rangeL_msg);
 ros::Publisher pub_range_right ("range_right_ping", &rangeR_msg);
@@ -46,10 +48,7 @@ ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
   //  //Serial.println("Cas1");
   //   break;
   // }
-void EncToZero (const std_msgs::Bool &msg){
-  pos [0] = 0;
-  pos [1] = 0;
-}
+
 
 void messageCdRight (const std_msgs::Float64 &msg){
   if (msg.data<0) { 
@@ -109,11 +108,20 @@ ros::Subscriber<std_msgs::Bool> ENCZero("ENC_zero", &EncToZero);
  ros::Subscriber<std_msgs::Float64> subL("v_left", &messageCdLeft);
  ros::Subscriber<std_msgs::Float64> subB("v_back", &messageCdBack);
 
+ void EncToZero (const std_msgs::Bool &msg){
+  if(msg.data==true){
+  pos [0] = 0;
+  pos [1] = 0;
+
+  }
+}
+
 void setup() {
 nh.initNode();
-attachInterrupt(digitalPinToInterrupt(21),readEncoder<0>,RISING);
-attachInterrupt(digitalPinToInterrupt(19),readEncoder<1>,RISING);
+attachInterrupt(digitalPinToInterrupt(ENCA[0]),readEncoder<0>,RISING);
+attachInterrupt(digitalPinToInterrupt(ENCA[1]),readEncoder<1>,RISING);
 
+nh.subscribe(ENCZero);
 nh.subscribe(subL);
 nh.subscribe(subR);
 nh.subscribe(subB);
