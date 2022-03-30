@@ -1,0 +1,3 @@
+/home/dmitriy/Загрузки/navXTimeSync-master/CMakeFiles/edit_cache.dir
+/home/dmitriy/Загрузки/navXTimeSync-master/CMakeFiles/rebuild_cache.dir
+/home/dmitriy/Загрузки/navXTimeSync-master/CMakeFiles/NavXTimeStamp.dir
