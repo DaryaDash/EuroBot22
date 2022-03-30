@@ -1,9 +1,15 @@
 #include <ros.h>
 #include <sensor_msgs/Range.h>//PING msgs
 #include <std_msgs/Float64.h>//Motor msg
-#include <std_msgs/Bool.h>         // navX-Sensor Register Definition header file
+#include <std_msgs/Bool.h>
+#include <Wire.h>
+#include "AHRSProtocol.h"             // navX-Sensor Register Definition header file
 
+byte data[8];
 
+#define ITERATION_DELAY_MS                   0
+#define NAVX_SENSOR_DEVICE_I2C_ADDRESS_7BIT  0x32
+#define NUM_BYTES_TO_READ                    8
 
 ros::NodeHandle nh;
 
@@ -24,13 +30,14 @@ sensor_msgs::Range rangeR_msg;
 sensor_msgs::Range rangeL_msg;
 sensor_msgs::Range rangeF_msg;
 
+std_msgs::Float64 yaw_msg;
+
 std_msgs::Float64 ENCR_msg;
 std_msgs::Float64 ENCL_msg;
-
+ros::Publisher pub_yaw ("yaw", &yaw_msg);
 
 ros::Publisher pub_ENCR_POS ("ENCR_POS", &ENCR_msg);
 ros::Publisher pub_ENCL_POS ("ENCL_POS", &ENCL_msg);
-
 
 ros::Publisher pub_range_left ("range_left_ping", &rangeL_msg);
 ros::Publisher pub_range_right ("range_right_ping", &rangeR_msg);
@@ -48,7 +55,12 @@ ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
   //  //Serial.println("Cas1");
   //   break;
   // }
-
+void EncToZero (const std_msgs::Bool &msg){
+  if (msg.data==true){
+  pos [0] = 0;
+  pos [1] = 0;
+  }
+}
 
 void messageCdRight (const std_msgs::Float64 &msg){
   if (msg.data<0) { 
@@ -108,24 +120,23 @@ ros::Subscriber<std_msgs::Bool> ENCZero("ENC_zero", &EncToZero);
  ros::Subscriber<std_msgs::Float64> subL("v_left", &messageCdLeft);
  ros::Subscriber<std_msgs::Float64> subB("v_back", &messageCdBack);
 
- void EncToZero (const std_msgs::Bool &msg){
-  if(msg.data==true){
-  pos [0] = 0;
-  pos [1] = 0;
-
-  }
-}
-
 void setup() {
-nh.initNode();
-attachInterrupt(digitalPinToInterrupt(ENCA[0]),readEncoder<0>,RISING);
-attachInterrupt(digitalPinToInterrupt(ENCA[1]),readEncoder<1>,RISING);
 
+   Wire.begin(); // join i2c bus (address optional for master)
+
+  for ( int i = 0; i < sizeof(data); i++ ) {
+      data[i] = 0;
+  }
+
+nh.initNode();
+//attachInterrupt(digitalPinToInterrupt(21),readEncoder<0>,RISING);
+//attachInterrupt(digitalPinToInterrupt(19),readEncoder<1>,RISING);
 nh.subscribe(ENCZero);
 nh.subscribe(subL);
 nh.subscribe(subR);
 nh.subscribe(subB);
 nh.advertise(pub_ENCR_POS);
+nh.advertise(pub_yaw);
 nh.advertise(pub_ENCL_POS);
 nh.advertise(pub_range_front);
 nh.advertise(pub_range_left);
@@ -149,6 +160,7 @@ pinMode(ENCB[i], INPUT);
 
 }
 
+int register_address = NAVX_REG_YAW_L;
 
 unsigned long ping(int index){
 unsigned long echo,cm;
@@ -187,6 +199,26 @@ void loop() {
     ping(i); 
 
   }
+  int i = 0;
+  /* Transmit I2C data request */
+  Wire.beginTransmission(NAVX_SENSOR_DEVICE_I2C_ADDRESS_7BIT); // Begin transmitting to navX-Sensor
+  Wire.write(register_address);                                // Sends starting register address
+  Wire.write(NUM_BYTES_TO_READ);                               // Send number of bytes to read
+  Wire.endTransmission();                                      // Stop transmitting
+  
+  /* Receive the echoed value back */
+  Wire.beginTransmission(NAVX_SENSOR_DEVICE_I2C_ADDRESS_7BIT); // Begin transmitting to navX-Sensor
+  Wire.requestFrom(NAVX_SENSOR_DEVICE_I2C_ADDRESS_7BIT, NUM_BYTES_TO_READ);    // Send number of bytes to read
+
+  while(Wire.available()) {                                    // Read data (slave may send less than requested)
+     data[i++] = Wire.read();
+  }
+  Wire.endTransmission();                                      // Stop transmitting
+
+  /* Decode received data to floating-point orientation values */
+  yaw_msg.data =     IMURegisters::decodeProtocolSignedHundredthsFloat((char *)&data[0]);   // The cast is needed on arduino
+
+  pub_yaw.publish (&yaw_msg);
 
 ENCL_msg.data=pos[0];
 pub_ENCL_POS.publish (&ENCL_msg);

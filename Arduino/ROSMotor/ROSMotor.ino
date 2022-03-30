@@ -4,13 +4,13 @@
 
 #define PIN_ENR 3 // Вывод управления скоростью вращения мотора №1
 #define PIN_ENB 4 // Вывод управления скоростью вращения мотора №2
-#define PIN_ENL 5 // Вывод управления скоростью вращения мотора №3
-#define PIN_INRR 22 // Вывод управления направлением вращения мотора №1
-#define PIN_INRL 24 // Вывод управления направлением вращения мотора №1
-#define PIN_INLL 27 // Вывод управления направлением вращения мотора №2
-#define PIN_INLR 29 // Вывод управления направлением вращения мотора №2
-#define PIN_INBR 25 // Вывод управления направлением вращения мотора №3
-#define PIN_INBL 28 // Вывод управления направлением вращения мотора №3
+#define PIN_ENL 2 // Вывод управления скоростью вращения мотора №3
+#define PIN_INRR 29 // Вывод управления направлением вращения мотора №1
+#define PIN_INRL 28 // Вывод управления направлением вращения мотора №1
+#define PIN_INLL 26 // Вывод управления направлением вращения мотора №2
+#define PIN_INLR 27 // Вывод управления направлением вращения мотора №2
+#define PIN_INBR 22 // Вывод управления направлением вращения мотора №3
+#define PIN_INBL 25 // Вывод управления направлением вращения мотора №3
 
  ros::NodeHandle nh;  
 void messageCdRight (const std_msgs::Float64 &msg){
@@ -20,12 +20,12 @@ void messageCdRight (const std_msgs::Float64 &msg){
   digitalWrite(PIN_INRL, LOW);
   }
    if (msg.data>0) { 
-  analogWrite(PIN_ENR, msg.data);
+  analogWrite(PIN_ENR,abs(msg.data));
   digitalWrite(PIN_INRL, HIGH);
   digitalWrite(PIN_INRR, LOW);
   }
     if (msg.data==0) { 
-  analogWrite(PIN_ENR, msg.data);
+  analogWrite(PIN_ENR, abs(msg.data));
   digitalWrite(PIN_INRL, LOW);
   digitalWrite(PIN_INRR, LOW);
   }
@@ -37,12 +37,12 @@ void messageCdLeft (const std_msgs::Float64 &msg){
   digitalWrite(PIN_INLL, LOW);
   }
    if (msg.data>0) { 
-  analogWrite(PIN_ENL, msg.data);
+  analogWrite(PIN_ENL,abs(msg.data));
   digitalWrite(PIN_INLL, HIGH);
   digitalWrite(PIN_INLR, LOW);
   }
     if (msg.data==0) { 
-  analogWrite(PIN_ENL, msg.data);
+  analogWrite(PIN_ENL, abs(msg.data));
   digitalWrite(PIN_INLL, LOW);
   digitalWrite(PIN_INLR, LOW);
   }
@@ -55,12 +55,12 @@ void messageCdBack (const std_msgs::Float64 &msg){
   digitalWrite(PIN_INBL, HIGH);
   }
    if (msg.data>0) { 
-  analogWrite(PIN_ENB, msg.data);
+  analogWrite(PIN_ENB,abs(msg.data));
   digitalWrite(PIN_INBL, HIGH);
   digitalWrite(PIN_INBR, LOW);
   }
     if (msg.data==0) { 
-  analogWrite(PIN_ENB, msg.data);
+  analogWrite(PIN_ENB, abs(msg.data));
   digitalWrite(PIN_INBL, LOW);
   digitalWrite(PIN_INBR, LOW);
   }
