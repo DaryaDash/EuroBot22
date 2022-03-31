@@ -2,7 +2,7 @@
 #include <sensor_msgs/Range.h>//PING msgs
 #include <std_msgs/Float64.h>//Motor msg
 #include <std_msgs/Bool.h>        
-#include <std_msgs/String.h> 
+#include <std_msgs/Int64.h> 
 #include <Servo.h> 
 
 Servo back_servo;
@@ -116,8 +116,8 @@ void front_manipulcb (const std_msgs::Bool &msg){
   }
 
 
-void front_servocb (const std_msgs::String &msg){
-  if (msg.data == "up"){
+void front_servocb (const std_msgs::Int64 &msg){
+  /*if (msg.data == 0){
     front_servo.write(0);
   }
    else {
@@ -130,25 +130,26 @@ void front_servocb (const std_msgs::String &msg){
         }
      }
    }
-  }
+  }*/
 
- /*switch (msg.data){
-   case 'up':
+
+ switch (msg.data){
+   case 0:
    front_servo.write(0);
    break;
-   case 'down':
-   front_servo.write(0);
+   case 1:
+   front_servo.write(65);
    break;
-   case 'trow':
-   front_servo.write(0);
+   case 2:
+   front_servo.write(40);
    break;
- }*/
+ }}
 
 
 
 ros::Subscriber<std_msgs::Bool> ENCZero("ENC_zero", &EncToZero);
   ros::Subscriber<std_msgs::Bool> sub_front_manipul("grab", &front_manipulcb);
-ros::Subscriber<std_msgs::String> sub_front_servo("front_servo", &front_servocb);
+ros::Subscriber<std_msgs::Int64> sub_front_servo("front_servo", &front_servocb);
 
 ros::Subscriber<std_msgs::Float64> subR("v_right", &messageCdRight);
   ros::Subscriber<std_msgs::Float64> subL("v_left", &messageCdLeft);
@@ -165,7 +166,7 @@ ros::Subscriber<std_msgs::Float64> subR("v_right", &messageCdRight);
 void setup() {
     front_servo.attach(41);
     front_manipulator.attach(40);
-    back_servo.attach(40);
+    back_servo.attach(39);
     
   nh.initNode();
   attachInterrupt(digitalPinToInterrupt(ENCA[0]),readEncoder<0>,RISING);
