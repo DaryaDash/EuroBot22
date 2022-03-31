@@ -48,7 +48,7 @@ ros::Publisher pub_range_front ("range_front_ping", &rangeF_msg);
   //   pub_ENCR_POS.publish (&ENCL_msg);
   //  //Serial.println("Cas1");
   //   break;
-  // }
+  // }  
 void EncToZero (float pos []){
   pos [0] = 0;
   pos [1] = 0;
@@ -113,8 +113,7 @@ EncToZero(pos);
 
 void messageLinearX (const std_msgs::Float64 &msg){
 EncToZero(pos);
-  if (msg.data>0) {
-  if (EncTomm(pos, mm, 1)< abs(msg.data)){
+  if (msg.data>0) { 
   analogWrite(MotorSpeed [0], right_vel);
   analogWrite(MotorSpeed [2], left_vel);
   analogWrite(MotorSpeed [1], 0);
@@ -124,17 +123,6 @@ EncToZero(pos);
   digitalWrite(MotorDirectionLeft [1], LOW);
   digitalWrite(MotorDirectionRight [2], LOW);
   digitalWrite(MotorDirectionLeft [2], HIGH);
-  }
-    else {
- analogWrite(MotorSpeed [0], 0);
-  analogWrite(MotorSpeed [2], 0);
-  analogWrite(MotorSpeed [1], 0);
-  digitalWrite(MotorDirectionRight [0], LOW);
-  digitalWrite(MotorDirectionLeft [0], LOW);
-  digitalWrite(MotorDirectionRight [1], LOW);
-  digitalWrite(MotorDirectionLeft [1], LOW);
-  digitalWrite(MotorDirectionRight [2], LOW);
-  digitalWrite(MotorDirectionLeft [2], LOW);
   }
   }
   if (msg.data<0) {
@@ -148,17 +136,7 @@ EncToZero(pos);
   digitalWrite(MotorDirectionLeft [1], HIGH);
   digitalWrite(MotorDirectionRight [2], HIGH);
   digitalWrite(MotorDirectionLeft [2], LOW);}
-  else {
- analogWrite(MotorSpeed [0], 0);
-  analogWrite(MotorSpeed [2], 0);
-  analogWrite(MotorSpeed [1], 0);
-  digitalWrite(MotorDirectionRight [0], LOW);
-  digitalWrite(MotorDirectionLeft [0], LOW);
-  digitalWrite(MotorDirectionRight [1], LOW);
-  digitalWrite(MotorDirectionLeft [1], LOW);
-  digitalWrite(MotorDirectionRight [2], LOW);
-  digitalWrite(MotorDirectionLeft [2], LOW);    
-  }
+
   }
   }
 
