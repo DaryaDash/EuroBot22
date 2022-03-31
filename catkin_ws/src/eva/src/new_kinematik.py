@@ -125,42 +125,10 @@ def kinematik_world(data):               #не готово
 
 
 def stop():                                    #функция для остановки робота, публикует нули в топики
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
-    pub_lmotor.publish(0)
-    pub_rmotor.publish(0)
-    pub_bmotor.publish(0)
+    for i in range(10):
+        pub_lmotor.publish(0)
+        pub_rmotor.publish(0)
+        pub_bmotor.publish(0)
     print('stop')
     pub.publish(Bool(True))     #говорит, что остановился
     moveing = False
@@ -197,11 +165,11 @@ def front_ping(data):
     global f_ping
     f_ping = data.range
 def left_ping(data):
-    global f_ping
-    f_ping = data.data
+    global l_ping
+    l_ping = data.range
 def right_ping(data):
-    global f_ping
-    r_ping = data.data
+    global r_ping
+    r_ping = data.range
 
 
 
@@ -261,7 +229,7 @@ def corect_left_motor(prevErr):
     return prevErr
 
 
-def pid(inp, setpoint, kp, ki, kd, dt):
+def pid(inp, setpoint, kp=20, ki=0.01, kd=10, dt=0.03):
     global integral, prevErr
     err = setpoint - inp
     integral = integral + err * dt * ki
@@ -269,8 +237,8 @@ def pid(inp, setpoint, kp, ki, kd, dt):
     elif integral < -255: integral = -255
     D = (err - prevErr) / dt
     res = err * kp + integral + D * kd
-    if res > 255: res = 255
-    elif res < -255: res = -255
+   # if res > 255: res = 255
+   # elif res < -255: res = -255
     prevErr = err
     return res
  
@@ -353,32 +321,73 @@ def move_navx_odom(target_x, target_y, target_yaw=0):
         #time.sleep(0.1)
     stop()
 
+def move_yaw(target_yaw):
+    while not rospy.is_shutdown():
+        try:
+            now_yaw = get_yaw_navx()
+        except:
+            pass
+        if abs(now_yaw - target_yaw) < 4:
+            break
+        err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
+        v_left = -err
+        v_right = -err
+        v_back = -err
+        if v_left > 255: v_left = 255
+        elif v_left < -255: v_left = -255
+        if v_right > 255: v_right = 255
+        elif v_right < -255: v_right = -255
+        if v_back > 255: v_back = 255
+        elif v_back < -255: v_back = -255
+        pub_lmotor.publish(v_left*0.6)
+        pub_rmotor.publish(-v_right)
+        pub_bmotor.publish(v_back*0.6)
+    stop()
+    stop()
+    stop()
+    print('stop')
 
 
-def move_navx_f_ping(target_x, target_y, target_f, dist_to_wall=True, target_yaw=0):
+
+def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, dist_to_wall=True, target_yaw=0):
     distance = sqrt(target_x**2+target_y**2)
     xv = (target_x/distance)*velocity
     yv = (target_y/distance)*velocity
     v_l, v_r, v_b = v1v2v3(xv, yv)
     rospy.Subscriber('range_front_ping', Range, front_ping)
+    rospy.Subscriber('range_left_ping', Range, left_ping)
+    rospy.Subscriber('range_right_ping', Range, right_ping)
     time.sleep(0.05)
     if dist_to_wall:
         pass
     if target_y > 0:
         pass
+    try:
+        now_yaw = get_yaw_navx()
+    except:
+        pass
+
     while not rospy.is_shutdown():
         if target_y > 0:
-            if f_ping < target_f:
+            if target_f and (f_ping < target_f):
+                print(f_ping)
+                break
+            elif target_l and (l_ping < target_l):
+                break
+            elif target_r and (r_ping < target_r):
                 break
         elif target_y < 0:
-            if f_ping > target_f:
+            if target_f and (f_ping > target_f):
+                break
+            elif target_l and (l_ping > target_l):
+                break
+            elif target_r and (r_ping > target_r):
                 break
         try:
             now_yaw = get_yaw_navx()
         except:
             pass
-        err = pid(now_yaw, target_yaw, 30,10,0,10000)
-        print(err)
+        err = pid(now_yaw, target_yaw)
         v_left = v_l-err
         v_right = v_r-err
         v_back = v_b-err
@@ -392,10 +401,34 @@ def move_navx_f_ping(target_x, target_y, target_f, dist_to_wall=True, target_yaw
         pub_rmotor.publish(-v_right)
         pub_bmotor.publish(v_back*0.6)
         rospy.Subscriber('range_front_ping', Range, front_ping)
+        rospy.Subscriber('range_left_ping', Range, left_ping)
+        rospy.Subscriber('range_right_ping', Range, right_ping)
         print(now_yaw, v_left*0.6, v_right, v_back*0.6)
         #time.sleep(0.1)
     stop()
-
+    while not rospy.is_shutdown():
+        if abs(now_yaw - target_yaw) < 10:
+            break
+        try:
+            now_yaw = get_yaw_navx()
+        except:
+            pass
+        err = pid(now_yaw, target_yaw)
+        v_left = -err
+        v_right = -err
+        v_back = -err
+        if v_left > 255: v_left = 255
+        elif v_left < -255: v_left = -255
+        if v_right > 255: v_right = 255
+        elif v_right < -255: v_right = -255
+        if v_back > 255: v_back = 255
+        elif v_back < -255: v_back = -255
+        pub_lmotor.publish(v_left*0.6)
+        pub_rmotor.publish(-v_right)
+        pub_bmotor.publish(v_back*0.6)
+    stop()
+    stop()
+    stop()
 
 
 
@@ -420,9 +453,10 @@ def main():                              #главный код
     #pub_rmotor.publish(150)
     #prevErr = 0
     #while not rospy.is_shutdown():
-    while not rospy.is_shutdown():
-        a = input("Input x y theta: ").split()
-        move_navx_f_ping(float(a[0]), float(a[1]), float(a[2]))
+   # while not rospy.is_shutdown():
+   #     a = input("Input x y theta: ").split()
+   #     move_navx_f_ping(float(a[0]), float(a[1]), target_f=float(a[2]))
+        #move_yaw(float(a[0]))
    # time.sleep(1)
    # move_navx(-0.5,0)
    # time.sleep(1)
@@ -437,12 +471,12 @@ def main():                              #главный код
    # move_navx(0,0.5)
    # time.sleep(1)
    # move_navx(0.3, -0.5)
-   # time.sleep(1)
+    time.sleep(15)
    # move_navx(-0.7,-0.2, 45)
     #while not rospy.is_shutdown():
     #    print(ser_navx.readline())
     #pub_linear_y.publish(50)
-
+    move_navx_f_ping(0, 1, 25)
 
     stop()
 
