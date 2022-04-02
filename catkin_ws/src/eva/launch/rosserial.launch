@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="rosserial_python" name="serial_node.py" type="serial_node.py" output="screen">
+	</node>
+	
+</launch>

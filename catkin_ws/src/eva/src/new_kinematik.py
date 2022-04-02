@@ -2,10 +2,11 @@
 from math import sin, cos, sqrt
 import rospy
 import roslib
-from std_msgs.msg import Float64, Float64MultiArray, Bool
+from std_msgs.msg import Float64, Float64MultiArray, Bool, Int8, Int64
 from sensor_msgs.msg import Range
 import time
 import serial
+
 
 l = 0.1          #длинна луча
 velocity = 200    #скорость
@@ -14,13 +15,19 @@ cornerMotor_to_distance = 2105
 x_pos, y_pos, theta_pos, l_enc, r_enc, yaw = 0,0,0,0,0,0
 r_ping, l_ping, f_ping = 0,0,0
 integral, prevErr = 0,0
+start_button = False
 
+now_yaw = 0
 
+pub_front_servo = rospy.Publisher('front_servo', Int64, queue_size=10)
+pub_front_manipul = rospy.Publisher('grab', Bool, queue_size=10)
+pub_enc_zero = rospy.Publisher('ENC_zero', Bool, queue_size=10)
+pub_yaw = rospy.Publisher('yaw', Float64, queue_size=10)
 pub_linear_y = rospy.Publisher('linear_y', Float64, queue_size=10)
 pub_lmotor = rospy.Publisher('v_left', Float64, queue_size=10)
 pub_bmotor = rospy.Publisher('v_back', Float64, queue_size=10)
 pub_rmotor = rospy.Publisher('v_right', Float64, queue_size=10)
-pub = rospy.Publisher('moveing', Bool, queue_size=1)
+pub = rospy.Publisher('moveing', Bool, queue_size=10)
 
 
 
@@ -151,9 +158,25 @@ def get_position_odom(odom_l, odom_r, odom_b):
     y_pos = (sqrt(3)*odom_r - sqrt(3)*odom_l)/3 * cornerMotor_to_distance
     theta_pos = (odom_l + odom_r + odom_b)/3*l
 
-def get_yaw_navx():
-    return float(ser_navx.readline()[2:9])
 
+def get_yaw_navx():
+    try:
+        yaw = ser_navx.readline()[2:9]
+        pub_yaw.publish(yaw)
+        return float(yaw)
+    except:
+        pass
+
+def get_start_button(data):
+    global start_button
+    start_button = data.data
+
+last_line_val = 0
+detect_line = False
+def detection_line(data):
+    global line_val#, last_line_val
+    line_val = data.data
+    
 
 def left_enc(data):
     global l_enc
@@ -321,18 +344,24 @@ def move_navx_odom(target_x, target_y, target_yaw=0):
         #time.sleep(0.1)
     stop()
 
-def move_yaw(target_yaw):
+def move_yaw(target_yaw, right):
+    global correct
     while not rospy.is_shutdown():
-        try:
-            now_yaw = get_yaw_navx()
-        except:
-            pass
-        if abs(now_yaw - target_yaw) < 4:
+        for i in range(40):
+            try:
+                now_yaw = get_yaw_navx() - correct
+            except:
+                pass
+        if abs(now_yaw - target_yaw) < 7:
             break
-        err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
-        v_left = -err
-        v_right = -err
-        v_back = -err
+        #err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
+        if now_yaw > target_yaw:
+            right = -1
+        else:
+            right = 1
+        v_left = -200*right
+        v_right = -200*right
+        v_back = -200*right
         if v_left > 255: v_left = 255
         elif v_left < -255: v_left = -255
         if v_right > 255: v_right = 255
@@ -342,14 +371,20 @@ def move_yaw(target_yaw):
         pub_lmotor.publish(v_left*0.6)
         pub_rmotor.publish(-v_right)
         pub_bmotor.publish(v_back*0.6)
+        print(v_left, v_right, v_back)
+        print(now_yaw)
+        time.sleep(0.2)
+        stop()
     stop()
     stop()
     stop()
     print('stop')
 
+line_val = 0
 
 
-def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, dist_to_wall=True, target_yaw=0):
+def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, move_forward=True, dist_to_wall=True, target_yaw=0, line=False):
+    global correct
     distance = sqrt(target_x**2+target_y**2)
     xv = (target_x/distance)*velocity
     yv = (target_y/distance)*velocity
@@ -357,63 +392,72 @@ def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, dis
     rospy.Subscriber('range_front_ping', Range, front_ping)
     rospy.Subscriber('range_left_ping', Range, left_ping)
     rospy.Subscriber('range_right_ping', Range, right_ping)
+    rospy.Subscriber('line', Int64, detection_line)
     time.sleep(0.05)
     if dist_to_wall:
         pass
     if target_y > 0:
         pass
-    try:
-        now_yaw = get_yaw_navx()
-    except:
-        pass
-
+    
+    now_yaw = float(get_yaw_navx()) - correct
+    line_last_val = line_val
     while not rospy.is_shutdown():
-        if target_y > 0:
-            if target_f and (f_ping < target_f):
-                print(f_ping)
-                break
-            elif target_l and (l_ping < target_l):
-                break
-            elif target_r and (r_ping < target_r):
-                break
-        elif target_y < 0:
-            if target_f and (f_ping > target_f):
-                break
-            elif target_l and (l_ping > target_l):
-                break
-            elif target_r and (r_ping > target_r):
-                break
-        try:
-            now_yaw = get_yaw_navx()
-        except:
+        if f_ping < 5:
             pass
-        err = pid(now_yaw, target_yaw)
-        v_left = v_l-err
-        v_right = v_r-err
-        v_back = v_b-err
-        if v_left > 255: v_left = 255
-        elif v_left < -255: v_left = -255
-        if v_right > 255: v_right = 255
-        elif v_right < -255: v_right = -255
-        if v_back > 255: v_back = 255
-        elif v_back < -255: v_back = -255
-        pub_lmotor.publish(v_left*0.6)
-        pub_rmotor.publish(-v_right)
-        pub_bmotor.publish(v_back*0.6)
-        rospy.Subscriber('range_front_ping', Range, front_ping)
-        rospy.Subscriber('range_left_ping', Range, left_ping)
-        rospy.Subscriber('range_right_ping', Range, right_ping)
-        print(now_yaw, v_left*0.6, v_right, v_back*0.6)
-        #time.sleep(0.1)
+        if l_ping < 5:
+            pass
+        if r_ping < 5:
+            pass
+        else:
+            print(line_val, line_last_val)
+            rospy.Subscriber('line', Int64, detection_line)
+            print(abs(line_val - line_last_val))
+            if abs(line_val - line_last_val) > 15 and line:
+                break
+            line_last_val = line_val
+            if move_forward:
+                if target_f and (f_ping < target_f):
+                    break
+                elif target_l and (l_ping < target_l):
+                    break
+                elif target_r and (r_ping < target_r):
+                    break
+            else:
+                if target_f and (f_ping > target_f):
+                    break
+                elif target_l and (l_ping > target_l):
+                    break
+                elif target_r and (r_ping > target_r):
+                    break
+            now_yaw = float(get_yaw_navx()) - correct
+            err = pid(now_yaw, target_yaw)
+            v_left = v_l-err
+            v_right = v_r-err
+            v_back = v_b-err
+            if v_left > 255: v_left = 255
+            elif v_left < -255: v_left = -255
+            if v_right > 255: v_right = 255
+            elif v_right < -255: v_right = -255
+            if v_back > 255: v_back = 255
+            elif v_back < -255: v_back = -255
+            pub_lmotor.publish(v_left*0.6)
+            pub_rmotor.publish(-v_right)
+            pub_bmotor.publish(v_back*0.7)
+            rospy.Subscriber('range_front_ping', Range, front_ping)
+            rospy.Subscriber('range_left_ping', Range, left_ping)
+            rospy.Subscriber('range_right_ping', Range, right_ping)
+            print(now_yaw, v_left*0.6, v_right, v_back*0.7)
+            print(l_ping, f_ping, r_ping)
+            #time.sleep(0.1)
     stop()
-    while not rospy.is_shutdown():
+    while False and not rospy.is_shutdown():
         if abs(now_yaw - target_yaw) < 10:
             break
         try:
             now_yaw = get_yaw_navx()
+            err = pid(now_yaw, target_yaw)
         except:
             pass
-        err = pid(now_yaw, target_yaw)
         v_left = -err
         v_right = -err
         v_back = -err
@@ -431,53 +475,63 @@ def move_navx_f_ping(target_x, target_y, target_f=0, target_l=0, target_r=0, dis
     stop()
 
 
-
+right_move = 1
 
 def main():                              #главный код
-    global moveing
+    global moveing, correct, velocity
     rospy.init_node('kinematik')
-    # print('x: ', x_pos)
-    # print('y: ', y_pos)
-    # print('theta: ', theta_pos)
-    # print()
-   # kinematik_local(100, 250)
-   # time.sleep(2)
-   # stop()
-   # time.sleep(1)
-   # kinematik_local(100, -250)
-   # pub_bmotor.publish(200)
-   # time.sleep(2)
-    # move_local_time(-0.7,3)
-    # time.sleep(2)
-    # move_local_time(0.7,-3)
-    #pub_rmotor.publish(150)
-    #prevErr = 0
-    #while not rospy.is_shutdown():
-   # while not rospy.is_shutdown():
-   #     a = input("Input x y theta: ").split()
-   #     move_navx_f_ping(float(a[0]), float(a[1]), target_f=float(a[2]))
-        #move_yaw(float(a[0]))
-   # time.sleep(1)
-   # move_navx(-0.5,0)
-   # time.sleep(1)
-   # move_navx(-0.7,0, -90)
-   # time.sleep(1)
-   # move_navx(-0.7, 0.7, 45)
-   # time.sleep(1)
-   # move_navx(0.2,-0.8, -30)
-   # time.sleep(10)
-   # move_navx(0.3, 0.5, -50)
-   # time.sleep(1)
-   # move_navx(0,0.5)
-   # time.sleep(1)
-   # move_navx(0.3, -0.5)
-    time.sleep(15)
-   # move_navx(-0.7,-0.2, 45)
-    #while not rospy.is_shutdown():
-    #    print(ser_navx.readline())
-    #pub_linear_y.publish(50)
-    move_navx_f_ping(0, 1, 25)
-
+    correct = 38
+    stop()
+    while not start_button:
+        rospy.Subscriber('range_front_ping', Range, front_ping)
+        rospy.Subscriber('range_left_ping', Range, left_ping)
+        rospy.Subscriber('range_right_ping', Range, right_ping)
+        print(get_yaw_navx(), l_ping, f_ping, r_ping)
+        rospy.Subscriber('start', Bool, get_start_button)
+        #if True:
+        #    break
+        if rospy.is_shutdown():
+            correct = float(get_yaw_navx())
+            break
+    correct = float(get_yaw_navx())
+    for i in range(20):
+        pub_front_servo.publish(0)
+        pub_front_manipul.publish(False)
+    move_navx_f_ping(-1*right_move, 0, target_r=26, move_forward=False)
+    time.sleep(1)
+    move_navx_f_ping(0, 1, 35)
+    #move_navx_f_ping(1*right_move, 0, target_r=20)
+    time.sleep(1)
+    #move_navx_f_ping(1*right_move, 0, target_r=25, target_yaw=0, move_forward=True)
+    move_yaw(45*right_move, 1)
+    velocity -= 70
+    move_navx_f_ping(1*right_move, 0, line=True, target_yaw=45, target_r=20)
+    velocity += 70
+    for i in range(20):
+        pub_lmotor.publish(-100)
+        pub_rmotor.publish(-170)
+    time.sleep(1)
+    #move_navx_f_ping(1, 0, target_l=78, move_forward=False, target_yaw=45)
+    stop()
+    for i in range(50):
+        pub_front_servo.publish(1)
+    time.sleep(1)
+    for i in range(50):
+        pub_front_manipul.publish(True)
+    time.sleep(1)
+    for i in range(50):
+        pub_front_servo.publish(1)
+    time.sleep(0)
+    
+    #for i in range(20):
+     #   pub_lmotor.publish(120)
+      #  pub_rmotor.publish(200)
+    time.sleep(0.5)
+    move_yaw(0, 1)
+    stop()
+    move_navx_f_ping(0, -1, 80,  move_forward=False)
+    #move_yaw(-90, -1)
+    move_navx_f_ping(1*right_move, 0, target_r=10)
     stop()
 
 
