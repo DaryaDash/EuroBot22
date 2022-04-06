@@ -4,7 +4,7 @@ import cv2 as cv
 import cv2.aruco as aruco
 import numpy as np
 import rospy
-from std_msgs.msg import Float64
+from std_msgs.msg import Float32
 
 
 marker_size = 10
@@ -98,8 +98,8 @@ def main():
     cap = cv.VideoCapture(0)
     # imgAug = cv.imread('0.jpg')
     rospy.init_node('opencv')
-    pub_aruco_stat = rospy.Publisher('aruco_stat', Float64, queue_size=10)
-    while True:
+    pub_aruco_stat = rospy.Publisher('aruco_stat', Float32, queue_size=10)
+    while not rospy.is_shutdown():
         success, img = cap.read()
         arucoFound = findArucomarkers(img)
         coordinaties = []
@@ -109,10 +109,10 @@ def main():
                 coordinaties += coordinate
             pub_aruco_stat.publish(coordinaties[0][1][0]-320)
             print(coordinaties)
-        cv.imshow('Image', img)
+        #cv.imshow('Image', img)
         
-        if cv.waitKey(1) & 0xFF == ord('q'):
-            break
+        #if cv.waitKey(1) & 0xFF == ord('q'):
+         #   break
 
 if __name__ == '__main__':
     main()

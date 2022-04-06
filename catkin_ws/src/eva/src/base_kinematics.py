@@ -3,7 +3,7 @@
 from math import sin, cos, sqrt
 import rospy
 import roslib
-from std_msgs.msg import Float64, Float64MultiArray, Bool, Int8, Int64
+from std_msgs.msg import Float64, Float64MultiArray, Bool, Int8, Int64, Float32
 from sensor_msgs.msg import Range
 import time
 import serial
@@ -14,7 +14,7 @@ right_move = 1 # 1 если робот у правого края, -1 если �
 
  
 send_topics = 1  #сколько топиков отправляет за раз
-debag = True
+debag = False
 min_distance = -3   #минимальное растояние при котором он останавливается
 
 
@@ -65,7 +65,7 @@ except:
 
 line_val = 0
 
-def move_navx(target_x, target_y, target_yaw=0):
+def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
     distance = sqrt(target_x**2+target_y**2)
     if distance > 0:
         xv = (target_x/distance)*velocity
@@ -73,7 +73,10 @@ def move_navx(target_x, target_y, target_yaw=0):
         v_left, v_right, v_back = v1v2v3(xv, yv)
     else:
         v_left, v_right, v_back = 0,0,0
-    now_yaw = float(get_yaw_navx()) - correct
+    if not now_yaw:
+        now_yaw = float(get_yaw_navx()) - correct
+    if target_yaw == None:
+        target_yaw = now_yaw
     err = pid(now_yaw, target_yaw)
     v_left = v_left-err
     v_right = v_right-err
@@ -90,7 +93,7 @@ def move_navx(target_x, target_y, target_yaw=0):
     pub_lmotor.publish(v_left)
     pub_rmotor.publish(v_right)
     pub_bmotor.publish(v_back)
-    print('Yaw='+str(now_yaw), 'Motors: Left=' + str(v_left)[:6], 'Right=' + str(-v_right)[:6], 'Back=' + str(v_back)[:6])
+    print('Yaw='+str(now_yaw), 'Motors: Left=' + str(v_left)[:6], 'Right=' + str(v_right)[:6], 'Back=' + str(v_back)[:6])
 
 
 
