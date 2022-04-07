@@ -37,10 +37,10 @@ pub_back_servo = rospy.Publisher('back_servo', Bool, queue_size=10)
 pub_back_manipul = rospy.Publisher('back_grab', Bool, queue_size=10)
 pub_enc_zero = rospy.Publisher('ENC_zero', Bool, queue_size=10)
 pub_yaw = rospy.Publisher('yaw', Float64, queue_size=10)
-pub_linear_y = rospy.Publisher('linear_y', Float64, queue_size=10)
-pub_lmotor = rospy.Publisher('v_left', Float64, queue_size=10)
-pub_bmotor = rospy.Publisher('v_back', Float64, queue_size=10)
-pub_rmotor = rospy.Publisher('v_right', Float64, queue_size=10)
+pub_linear_y = rospy.Publisher('linear_y', Float32, queue_size=10)
+pub_lmotor = rospy.Publisher('v_left', Float32, queue_size=10)
+pub_bmotor = rospy.Publisher('v_back', Float32, queue_size=10)
+pub_rmotor = rospy.Publisher('v_right', Float32, queue_size=10)
 pub = rospy.Publisher('moveing', Bool, queue_size=10)
 
 
@@ -77,6 +77,12 @@ def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
         now_yaw = float(get_yaw_navx()) - correct
     if target_yaw == None:
         target_yaw = now_yaw
+    if abs(target_yaw - now_yaw) > 300:
+        now_yaw += 360
+#    if target_yaw > 180:
+ #       target_yaw -= 180
+  #  elif target_yaw < -180:
+   #     target_yaw += 180
     err = pid(now_yaw, target_yaw)
     v_left = v_left-err
     v_right = v_right-err
@@ -93,7 +99,7 @@ def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
     pub_lmotor.publish(v_left)
     pub_rmotor.publish(v_right)
     pub_bmotor.publish(v_back)
-    print('Yaw='+str(now_yaw), 'Motors: Left=' + str(v_left)[:6], 'Right=' + str(v_right)[:6], 'Back=' + str(v_back)[:6])
+    print('Yaw='+str(now_yaw)[:6], str(target_yaw), 'Motors: Left=' + str(v_left)[:6], 'Right=' + str(v_right)[:6], 'Back=' + str(v_back)[:6])
 
 
 

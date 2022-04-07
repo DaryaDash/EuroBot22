@@ -21,7 +21,7 @@ def main():
     for i in range(1):
         kine.move_yaw_aruco()
         time.sleep(1)
-    kine.move_aruco(0,1,target_f=10, target_yaw=None)
+    kine.move_aruco(0,1,target_f=15, target_yaw=None)
     stop()
     time.sleep(1)
     #kine.move_yaw_aruco()
@@ -30,27 +30,31 @@ def main():
     stop()
     time.sleep(2)
     kine.move_time(0,-1,1, target_yaw=None)
-    kine.move_dist_f(0,-1,target_f=10, target_yaw=None, move_forward=False)
-    time.sleep(3)
+    time.sleep(1)
+    kine.move_dist_f(0,0, target_yaw=b_kine.get_yaw_navx()-b_kine.correct+180)
+    time.sleep(1)
+    kine.move_time(0,-1,1, target_yaw=None)
+    time.sleep(1)
+    kine.move_dist_f(0,1,target_f=30, target_yaw=180, move_forward=True)
+    time.sleep(1)
+    kine.move_dist_f(0,0,target_f=30, target_yaw=180, move_forward=True)
+    time.sleep(1)
     for i in range(1):
         b_kine.pub_front_manipul.publish(True)
     for i in range(10):
         stop()
         b_kine.rate.sleep()
-    return
-    kine.move_dist_f(-1,0, target_yaw=0, target_r = 25, move_forward=False)
-    kine.move_dist_f(0,1, target_yaw=0, target_f = 20)
-    kine.move_dist_f(0,-1, target_yaw=45, target_f = 65, move_forward=False)
-    kine.move_dist_f(0,1, target_yaw=0, target_f = 25)
-    kine.move_time(0,0,2, target_yaw=-90)
-    kine.move_dist_f(-1,0, target_yaw=-90, target_r = 60, move_forward=False)
-    kine.move_dist_f(0,1, target_yaw=-145, target_f = 30)
-    stop()
-    time.sleep(1)
-    for i in range(10):
-        b_kine.pub_front_manipul.publish(False)
-    #kine.move_time(1,-1,2, target_yaw=-45)
+    #return
 
+
+
+    #kine.move_dist_f(-1,0, target_yaw=0, target_r = 25, move_forward=False)
+   # kine.move_dist_f(0,1, target_yaw=0, target_f = 20)
+    #kine.move_dist_f(0,-1, target_yaw=45, target_f = 65, move_forward=False)
+#    kine.move_dist_f(0,1, target_yaw=0, target_f = 25)
+ #   kine.move_time(0,0,2, target_yaw=-90)
+  #  kine.move_dist_f(-1,0, target_yaw=-90, target_r = 60, move_forward=False)
+    
 
 
 

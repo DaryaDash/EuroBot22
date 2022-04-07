@@ -9,18 +9,20 @@ aruco_data = 100
 b_kine.rate = rospy.Rate(50) # hz
 
 def move_dist_f(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_r=0, move_forward=True):
+    start_yaw = b_kine.get_yaw_navx()-b_kine.correct
     while(not b_kine.check_distance(target_f=target_f, target_l=target_l, target_r=target_r, move_forward=move_forward)
     and not rospy.is_shutdown() and check_time()):
         b_kine.move_navx(target_x, target_y, target_yaw)
-        if target_x == 0 and target_y == 0 and abs(b_kine.now_yaw - target_yaw) < 10:
+        if target_x == 0 and target_y == 0 and abs(b_kine.get_yaw_navx()-b_kine.correct - target_yaw) < 15:
             b_kine.stop()
             break
+    b_kine.stop()
 
 def move_time(target_x, target_y, target_time, target_yaw=0, move_forward=True):
     hour_before = time.gmtime().tm_hour
     min_before = time.gmtime().tm_min
     sec_before = time.gmtime().tm_sec
-    while(check_time_action(hour_before, min_before, sec_before, target_time) and check_time()):
+    while(check_time_action(hour_before, min_before, sec_before, target_time) and not rospy.is_shutdown() and check_time()):
         b_kine.move_navx(target_x, target_y, target_yaw)
     for i in range(b_kine.send_topics):
         b_kine.stop()
