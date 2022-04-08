@@ -41,9 +41,9 @@ attachInterrupt(digitalPinToInterrupt(ENCA[1]),readEncoder<1>,RISING);
   pinMode(PIN_IN4, OUTPUT);
   pinMode(PIN_IN5, OUTPUT);
   pinMode(PIN_IN6, OUTPUT);
- analogWrite(PIN_ENA,255);
+ analogWrite(PIN_ENA,0);
    analogWrite(PIN_ENC, 255); // Устанавливаем скорость 1-го мотора
-   analogWrite(PIN_ENB, 255);
+   analogWrite(PIN_ENB, 0);
  // Устанавливаем скорость 1-го мотора
     // Задаём направление для 1-го мотора
     digitalWrite(PIN_IN1, LOW);
@@ -66,8 +66,8 @@ void loop() {
    digitalWrite(PIN_IN3, LOW);
     digitalWrite(PIN_IN4,HIGH);
        // Задаём направление для 3-го мотора
-    digitalWrite(PIN_IN5, LOW);
-    digitalWrite(PIN_IN6, HIGH);
+    digitalWrite(PIN_IN5,HIGH);
+    digitalWrite(PIN_IN6, LOW);
     Serial.print(" R ");
     Serial.print(pos[0] );
     Serial.print(" L ");

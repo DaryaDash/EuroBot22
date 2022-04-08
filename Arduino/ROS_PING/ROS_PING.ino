@@ -64,6 +64,6 @@ void loop() {
     delay(50);
   }
   nh.spinOnce();
-  delay(50);
+  
   // put your main code here, to run repeatedly:
 }

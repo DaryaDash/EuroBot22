@@ -9,7 +9,7 @@ AHRS navx = AHRS("/dev/ttyACM0");
 float degToRad = M_PI/180;
 void ZeroYawcb (const:: std_msgs::Bool msg){
 	if (msg.data){
-		navx.ZeroYaw();
+		navx.Reset();
 	}
 };
 
