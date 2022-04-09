@@ -5,15 +5,31 @@ import rospy, time
 
 b_kine.velocity = 200
 
-aruco_data = 100
-b_kine.rate = rospy.Rate(50) # hz
+aruco_data = 30
+b_kine.rate = rospy.Rate(20) # hz
 
 def move_dist_f(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_r=0, move_forward=True):
-    start_yaw = b_kine.get_yaw_navx()-b_kine.correct
+    start_yaw = b_kine.get_yaw_navx()
+    check_stop = 0
     while(not b_kine.check_distance(target_f=target_f, target_l=target_l, target_r=target_r, move_forward=move_forward)
     and not rospy.is_shutdown() and check_time()):
-        b_kine.move_navx(target_x, target_y, target_yaw)
-        if target_x == 0 and target_y == 0 and abs(b_kine.get_yaw_navx()-b_kine.correct - target_yaw) < 15:
+        print(b_kine.get_yaw_navx(), target_yaw)
+        now_yaw, target_yaw = b_kine.move_navx(target_x, target_y, target_yaw)
+        if target_x == 0 and target_y == 0 and abs(now_yaw - target_yaw) < 15:
+            check_stop += 1
+            #break
+            if check_stop > 10:
+                break
+        else:
+            check_stop = 0
+    b_kine.stop()
+
+
+def move_yaw(target_yaw):
+    while(not rospy.is_shutdown() and check_time()):
+        print(target_yaw)
+        b_kine.move_yaw(target_yaw)
+        if abs(b_kine.get_yaw_navx() - target_yaw) < 10:
             b_kine.stop()
             break
     b_kine.stop()
@@ -41,7 +57,7 @@ def move_aruco(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_
     rospy.Subscriber('aruco_stat', b_kine.Float32, get_aruco_data)
     while(not b_kine.check_distance(target_f=target_f, target_l=target_l, target_r=target_r, move_forward=move_forward)
     and not rospy.is_shutdown() and check_time()):
-        b_kine.move_navx(target_x, target_y, target_yaw=0, now_yaw=-aruco_data/20)
+        b_kine.move_navx(target_x, target_y, target_yaw=0, now_yaw=-aruco_data/30)
         rospy.Subscriber('aruco_stat', b_kine.Float32, get_aruco_data)
         b_kine.rate.sleep()
         if target_x == 0 and target_y == 0 < 10:
@@ -60,7 +76,7 @@ def wait_start():
         rospy.Subscriber('range_right_ping', b_kine.Range, b_kine.right_ping)
         print(b_kine.get_yaw_navx(), b_kine.l_ping, b_kine.f_ping, b_kine.r_ping)
         rospy.Subscriber('start', b_kine.Bool, b_kine.get_start_button)
-        b_kine.correct = b_kine.get_yaw_navx()
+        b_kine.set_null_navx()
         b_kine.rate.sleep()
 
 

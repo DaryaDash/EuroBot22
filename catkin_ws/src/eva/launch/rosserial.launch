@@ -1,5 +1,6 @@
 <launch>
 	<node pkg="rosserial_python" name="serial_node.py" type="serial_node.py" output="screen">
 	</node>
-	
+	<node pkg="eva" name="opencv_aruco.py" type="opencv_aruco.py" output="screen">
+        </node>
 </launch>

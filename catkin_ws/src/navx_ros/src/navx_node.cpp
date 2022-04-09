@@ -1,17 +1,9 @@
 #include "ros/ros.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Bool.h"
-//#include "sensor_msgs/Imu.h"
 #include <AHRS.h>
 #include <math.h>
-
 AHRS navx = AHRS("/dev/ttyACM0");
-float degToRad = M_PI/180;
-void ZeroYawcb (const:: std_msgs::Bool msg){
-	if (msg.data){
-		navx.Reset();
-	}
-};
 
 float derive(float prevVal, float currVal, float prevTime, float currTime)
 {

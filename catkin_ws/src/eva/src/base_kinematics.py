@@ -28,8 +28,9 @@ integral, prevErr = 0,0
 start_button = False
 
 timer_val = True #таймер разрешает работать
-now_yaw = 38
-correct = 38
+now_yaw = 0
+yaw_topic = 0
+correct = 0
 
 pub_front_servo = rospy.Publisher('front_servo', Int64, queue_size=10)
 pub_front_manipul = rospy.Publisher('front_grab', Bool, queue_size=10)
@@ -43,7 +44,7 @@ pub_bmotor = rospy.Publisher('v_back', Float32, queue_size=10)
 pub_rmotor = rospy.Publisher('v_right', Float32, queue_size=10)
 pub = rospy.Publisher('moveing', Bool, queue_size=10)
 
-
+'''
 
 try:
     ser_navx = serial.Serial('/dev/ttyACM3')
@@ -60,12 +61,13 @@ except:
                 ser_navx = serial.Serial('/dev/ttyACM0')
 
 
-
+'''
 
 
 line_val = 0
 
 def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
+    rospy.Subscriber('yaw', Float64, get_navx_ros)
     distance = sqrt(target_x**2+target_y**2)
     if distance > 0:
         xv = (target_x/distance)*velocity
@@ -74,16 +76,20 @@ def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
     else:
         v_left, v_right, v_back = 0,0,0
     if not now_yaw:
-        now_yaw = float(get_yaw_navx()) - correct
+        now_yaw = float(get_yaw_navx())
     if target_yaw == None:
         target_yaw = now_yaw
-    if abs(target_yaw - now_yaw) > 300:
+    print('input data', now_yaw, target_yaw)
+    if (target_yaw - now_yaw) > 180:
         now_yaw += 360
+    if (target_yaw - now_yaw) < -180:
+        now_yaw -= 360
+    print('2input data', now_yaw, target_yaw)
 #    if target_yaw > 180:
  #       target_yaw -= 180
   #  elif target_yaw < -180:
    #     target_yaw += 180
-    err = pid(now_yaw, target_yaw)
+    err = pid(now_yaw, target_yaw) #, get_yaw_navx(original=True))
     v_left = v_left-err
     v_right = v_right-err
     v_back = v_back-err
@@ -99,42 +105,39 @@ def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
     pub_lmotor.publish(v_left)
     pub_rmotor.publish(v_right)
     pub_bmotor.publish(v_back)
-    print('Yaw='+str(now_yaw)[:6], str(target_yaw), 'Motors: Left=' + str(v_left)[:6], 'Right=' + str(v_right)[:6], 'Back=' + str(v_back)[:6])
+    #print('Yaw='+str(now_yaw)[:6], str(target_yaw), 'Motors: Left=' + str(v_left)[:6], 'Right=' + str(v_right)[:6], 'Back=' + str(v_back)[:6])
+    return now_yaw, target_yaw
 
 
 
-
-def move_yaw(target_yaw, right):
-    while not rospy.is_shutdown() and timer_val:
-        for i in range(40):
-            try:
-                now_yaw = get_yaw_navx() - correct
-            except:
-                pass
-        if abs(now_yaw - target_yaw) < 10:
-            break
-        #err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
-        if now_yaw > target_yaw:
-            right = -1
-        else:
-            right = 1
-        v_left = -200*right
-        v_right = -200*right
-        v_back = -200*right
-        if v_left > 255: v_left = 255
-        elif v_left < -255: v_left = -255
-        if v_right > 255: v_right = 255
-        elif v_right < -255: v_right = -255
-        if v_back > 255: v_back = 255
-        elif v_back < -255: v_back = -255
-        pub_lmotor.publish(v_left*0.6)
-        pub_rmotor.publish(-v_right)
-        pub_bmotor.publish(v_back*0.6)
-        print(v_left, v_right, v_back)
-        print(now_yaw)
-        timer_val = timer()
-        time.sleep(0.2)
-        stop()
+def move_yaw(target_yaw):
+    rospy.Subscriber('yaw', Float64, get_navx_ros)
+    for i in range(40):
+        try:
+            now_yaw = get_yaw_navx()
+        except:
+            pass
+    #err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
+    if now_yaw > target_yaw:
+        right = -1
+    else:
+        right = 1
+    v_left = -100*right
+    v_right = -100*right
+    v_back = -100*right
+    if v_left > 255: v_left = 255
+    elif v_left < -255: v_left = -255
+    if v_right > 255: v_right = 255
+    elif v_right < -255: v_right = -255
+    if v_back > 255: v_back = 255
+    elif v_back < -255: v_back = -255
+    pub_lmotor.publish(v_left*0.6)
+    pub_rmotor.publish(-v_right)
+    pub_bmotor.publish(v_back*0.6)
+    print(v_left, v_right, v_back)
+    print(now_yaw)
+    time.sleep(0.3)
+    stop()
     stop()
     stop()
     stop()
@@ -177,6 +180,7 @@ def check_distance(target_f=0, target_l=0, target_r=0, move_forward=True):
 
 
 def move_forward_navx(target_distance, target_yaw=0):
+    rospy.Subscriber('yaw', Float64, get_navx_ros)
     v_left, v_right, v_back = v1v2v3(0, velocity)
     _, target_r,_ = v1v2v3(0, target_distance)
     target_r = target_r / cornerMotor_to_distance
@@ -280,13 +284,33 @@ def get_position_odom(odom_l, odom_r, odom_b):
     theta_pos = (odom_l + odom_r + odom_b)/3*l
 
 
-def get_yaw_navx():
+
+def get_yaw_navx(original=False):
+
     try:
-        yaw = ser_navx.readline()[2:9]
-        pub_yaw.publish(yaw)
-        return float(yaw)
+       # yaw = ser_navx.readline()[2:9]
+        yaw = yaw_topic
+        if original:
+            return float(yaw)
+        out = float(yaw) - correct
+        if out > 180:
+            out -= 360
+        elif out < -180:
+            out += 360
+        pub_yaw.publish(out)
+        return out
     except:
         return now_yaw
+
+def get_navx_ros(data):
+    global yaw_topic
+    yaw_topic = data.data
+
+
+def set_null_navx():
+    global correct
+    correct = get_yaw_navx(original=True)
+
 
 def get_start_button(data):
     global start_button
@@ -400,7 +424,7 @@ def corect_left_motor(prevErr):
     return prevErr
 
 
-def pid(inp, setpoint, kp=20, ki=0.01, kd=10, dt=0.03):
+def pid(inp, setpoint, kp=15, ki=0.01, kd=4, dt=0.03):
     global integral, prevErr
     err = setpoint - inp
     integral = integral + err * dt * ki
@@ -455,42 +479,7 @@ def move_forward_navx(target_distance, target_yaw=0):
         print(v_left, v_right, now_yaw, err)
     stop()
 
-def move_yaw(target_yaw, right):
-    global correct, timer_val
-    while not rospy.is_shutdown() and timer_val:
-        for i in range(40):
-            try:
-                now_yaw = get_yaw_navx() - correct
-            except:
-                pass
-        if abs(now_yaw - target_yaw) < 10:
-            break
-        #err = pid(now_yaw, target_yaw, kp=1, ki=10, kd=0, dt=0.03)
-        if now_yaw > target_yaw:
-            right = -1
-        else:
-            right = 1
-        v_left = -200*right
-        v_right = -200*right
-        v_back = -200*right
-        if v_left > 255: v_left = 255
-        elif v_left < -255: v_left = -255
-        if v_right > 255: v_right = 255
-        elif v_right < -255: v_right = -255
-        if v_back > 255: v_back = 255
-        elif v_back < -255: v_back = -255
-        pub_lmotor.publish(v_left*0.6)
-        pub_rmotor.publish(-v_right)
-        pub_bmotor.publish(v_back*0.6)
-        print(v_left, v_right, v_back)
-        print(now_yaw)
-        timer_val = timer()
-        time.sleep(0.2)
-        stop()
-    stop()
-    stop()
-    stop()
-    print('stop')
+
 
 
 

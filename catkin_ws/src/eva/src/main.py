@@ -15,32 +15,64 @@ def main():
     kine.hour_start = time.gmtime().tm_hour
     kine.min_start = time.gmtime().tm_min
     kine.sec_start = time.gmtime().tm_sec
-    b_kine.pub_front_servo.publish(1)
-    for i in range(b_kine.send_topics):
+    for i in range(5):
+        b_kine.pub_front_servo.publish(1)
+        b_kine.pub_back_servo.publish(False)
         b_kine.pub_front_manipul.publish(True)
-    for i in range(1):
-        kine.move_yaw_aruco()
-        time.sleep(1)
-    kine.move_aruco(0,1,target_f=15, target_yaw=None)
+        b_kine.pub_back_manipul.publish(False)
+    #kine.move_yaw_aruco()
+    b_kine.set_null_navx()
+    kine.move_aruco(1,0,target_l=25, move_forward=False, target_yaw=0)
+    kine.move_aruco(0,1,target_f=25, move_forward=True, target_yaw=0)
+    time.sleep(1)
+    kine.move_aruco(0,1,target_f=10, target_yaw=None)
     stop()
     time.sleep(1)
+    #kine.move_time(0,1,1, target_yaw=None)
     #kine.move_yaw_aruco()
     for i in range(10):
         b_kine.pub_front_manipul.publish(False)
     stop()
     time.sleep(2)
+    b_kine.pub_front_servo.publish(0)
+    statuette_pose = b_kine.get_yaw_navx()-b_kine.correct
+    kine.move_time(0,1,2, target_yaw=0)
+    time.sleep(1)
+    b_kine.set_null_navx()
+    print(100000.00001, b_kine.correct, b_kine.get_yaw_navx(original=True), b_kine.get_yaw_navx())
+
+    v_left = -200
+    v_right = -200
+    v_back = -200
+    b_kine.pub_lmotor.publish(v_left*0.6)
+    b_kine.pub_rmotor.publish(-v_right)
+    b_kine.pub_bmotor.publish(v_back*0.6)
+    print(v_left, v_right, v_back)
+    time.sleep(0.3)
+    stop()
+    stop()
+    stop()
+    stop()
+
+
+
+    kine.move_dist_f(0,0, target_yaw=180)
+    time.sleep(1)
+    #kine.move_yaw(180)
     kine.move_time(0,-1,1, target_yaw=None)
     time.sleep(1)
-    kine.move_dist_f(0,0, target_yaw=b_kine.get_yaw_navx()-b_kine.correct+180)
+    b_kine.pub_back_manipul.publish(True)
+    b_kine.pub_back_manipul.publish(True)
+    b_kine.pub_back_manipul.publish(True)
     time.sleep(1)
-    kine.move_time(0,-1,1, target_yaw=None)
+    b_kine.set_null_navx()
+    kine.move_dist_f(0,1,target_f=30, target_yaw=45, move_forward=True)
     time.sleep(1)
-    kine.move_dist_f(0,1,target_f=30, target_yaw=180, move_forward=True)
+    #kine.move_dist_f(0,0,target_f=30, target_yaw=180, move_forward=True)
     time.sleep(1)
-    kine.move_dist_f(0,0,target_f=30, target_yaw=180, move_forward=True)
-    time.sleep(1)
-    for i in range(1):
+    for i in range(5):
         b_kine.pub_front_manipul.publish(True)
+        b_kine.pub_front_servo.publish(1)
     for i in range(10):
         stop()
         b_kine.rate.sleep()

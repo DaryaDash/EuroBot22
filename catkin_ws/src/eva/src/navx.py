@@ -11,10 +11,12 @@ except:
         ser = serial.Serial('/dev/ttyACM2')
 
 
-
+rospy.init_node('navx')
 
 pub_yaw = rospy.Publisher('yaw', Float64, queue_size=10)
 while not rospy.is_shutdown():
-    rospy.init_node('yaw_node')
-    yaw = float(ser.readline()[2:9])
-    pub_yaw.publish(yaw)
+    try:
+        yaw = float(ser.readline()[2:9])
+        pub_yaw.publish(yaw)
+    except:
+        print('Error')
