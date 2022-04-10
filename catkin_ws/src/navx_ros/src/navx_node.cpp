@@ -24,9 +24,9 @@ int main(int argc, char** argv){
 	//sensor_msgs::Imu imu;		
 	std_msgs::Float64 CurrY;
 	//initialize valus to calculate angular velocity for the IMU message
-	float prevTime = navx.GetLastSensorTimestamp() / 1000.0;
-	float prevPitch = navx.GetPitch() * degToRad; //about x-axis (empirically y-axis)
-	float prevRoll = navx.GetRoll() * degToRad; //about y-axis (empirically x-axis)
+	//float prevTime = navx.GetLastSensorTimestamp() / 1000.0;
+	//float prevPitch = navx.GetPitch() * degToRad; //about x-axis (empirically y-axis)
+	//float prevRoll = navx.GetRoll() * degToRad; //about y-axis (empirically x-axis)
 	float prevYaw = navx.GetYaw() * degToRad; //about z-axis
 
 	//fill and send message
@@ -47,10 +47,10 @@ int main(int argc, char** argv){
 		//imu.linear_acceleration.z = navx.GetWorldLinearAccelZ();
 	
 		//angular velocity
-		float currTime = navx.GetLastSensorTimestamp() / 1000.0;
-		float currPitch = navx.GetPitch() * degToRad;
-		float currRoll = navx.GetRoll() * degToRad;
-		float currYaw = navx.GetYaw() * degToRad;
+		//float currTime = navx.GetLastSensorTimestamp() / 1000.0;
+		//float currPitch = navx.GetPitch() * degToRad;
+		//float currRoll = navx.GetRoll() * degToRad;
+		float currYaw = navx.GetYaw(); //* degToRad;
 		CurrY.data=currYaw;
 		pub.publish(CurrY);
 		
@@ -59,9 +59,9 @@ int main(int argc, char** argv){
 		//imu.angular_velocity.x = derive(prevRoll, currRoll, prevTime, currTime);
 		//imu.angular_velocity.z = derive(prevYaw, currYaw, prevTime, currTime);	
 
-		prevTime = currTime;
-		prevPitch = currPitch;
-		prevRoll = currRoll;
+		//prevTime = currTime;
+		//prevPitch = currPitch;
+		//prevRoll = currRoll;
 		prevYaw = currYaw;
 
 		//pub.publish(imu);
