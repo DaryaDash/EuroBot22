@@ -4,14 +4,14 @@
 #include <std_msgs/Bool.h>        
 #include <std_msgs/Int64.h> 
 #include <Servo.h> 
-//#include <Filter.h> 
+#include <Filter.h> 
 
 Servo back_manipulator;
 Servo back_servo;
 Servo front_manipulator;
 Servo front_servo;
 
-//Moving_average filter(9);
+Moving_average filter(3);
 ros::NodeHandle nh;
 
   int irsensor= 7;  
@@ -267,10 +267,12 @@ for(int i=0; i < 2; i++) {
     pub_range_left.publish (&rangeL_msg);
     break;
   case 1:
+    //rangeF_msg.range= filter.filter(cm);
     rangeF_msg.range=cm;
     pub_range_front.publish (&rangeF_msg);
     break;
   case 2:
+    //rangeR_msg.range= filter.filter(cm);
     rangeR_msg.range=cm;
     pub_range_right.publish (&rangeR_msg);
     break;
