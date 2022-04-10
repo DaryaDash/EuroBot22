@@ -8,24 +8,26 @@ b_kine.velocity = 200
 aruco_data = 30
 b_kine.rate = rospy.Rate(20) # hz
 
+
+#движение до/от стены на определённое растояние
 def move_dist_f(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_r=0, move_forward=True):
     start_yaw = b_kine.get_yaw_navx()
     check_stop = 0
-    while(not b_kine.check_distance(target_f=target_f, target_l=target_l, target_r=target_r, move_forward=move_forward)
-    and not rospy.is_shutdown() and check_time()):
+    while(not rospy.is_shutdown() and check_time()):
         print(b_kine.get_yaw_navx(), target_yaw)
         now_yaw, target_yaw = b_kine.move_navx(target_x, target_y, target_yaw)
         if target_x == 0 and target_y == 0 and abs(now_yaw - target_yaw) < 15:
+            break
+        if b_kine.check_distance(target_f=target_f, target_l=target_l, target_r=target_r, move_forward=move_forward):
             check_stop += 1
-            #break
-            if check_stop > 10:
+            if check_stop > 5:
                 break
         else:
             check_stop = 0
     b_kine.stop()
 
 
-def move_yaw(target_yaw):
+def move_yaw(target_yaw):   #повернуться на угол
     while(not rospy.is_shutdown() and check_time()):
         print(target_yaw)
         b_kine.move_yaw(target_yaw)
@@ -34,6 +36,8 @@ def move_yaw(target_yaw):
             break
     b_kine.stop()
 
+
+#движение по времени
 def move_time(target_x, target_y, target_time, target_yaw=0, move_forward=True):
     hour_before = time.gmtime().tm_hour
     min_before = time.gmtime().tm_min
@@ -43,7 +47,7 @@ def move_time(target_x, target_y, target_time, target_yaw=0, move_forward=True):
     for i in range(b_kine.send_topics):
         b_kine.stop()
 
-def move_yaw_aruco():
+def move_yaw_aruco():    #выравнивание по aruco маркеру
     rospy.Subscriber('aruco_stat', b_kine.Float32, get_aruco_data)
     while(abs(aruco_data) > 10 and not rospy.is_shutdown() and check_time()):
         b_kine.move_navx(0,0,0, now_yaw=-aruco_data/5)
@@ -52,7 +56,7 @@ def move_yaw_aruco():
     for i in range(b_kine.send_topics):
         b_kine.stop()
 
-
+#движение за aruco маркером
 def move_aruco(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_r=0, move_forward=True):
     rospy.Subscriber('aruco_stat', b_kine.Float32, get_aruco_data)
     while(not b_kine.check_distance(target_f=target_f, target_l=target_l, target_r=target_r, move_forward=move_forward)
@@ -64,12 +68,9 @@ def move_aruco(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_
             b_kine.stop()
             break
 
-def prepare_to_start():
-    for i in range(b_kine.send_topics):
-        b_kine.pub_front_servo.publish(1)
-        b_kine.pub_front_manipul.publish(False)
 
-def wait_start():
+def wait_start():          #ожидание старта
+    global hour_start, min_start, sec_start
     while  not b_kine.start_button and not rospy.is_shutdown():
         rospy.Subscriber('range_front_ping', b_kine.Range, b_kine.front_ping)
         rospy.Subscriber('range_left_ping', b_kine.Range, b_kine.left_ping)
@@ -78,10 +79,13 @@ def wait_start():
         rospy.Subscriber('start', b_kine.Bool, b_kine.get_start_button)
         b_kine.set_null_navx()
         b_kine.rate.sleep()
+    hour_start = time.gmtime().tm_hour
+    min_start = time.gmtime().tm_min
+    sec_start = time.gmtime().tm_sec
 
 
 
-def check_time():
+def check_time():          #проверка для ограничения по времени 100 сек
     hour_now = time.gmtime().tm_hour
     min_now = time.gmtime().tm_min
     sec_now = time.gmtime().tm_sec
@@ -92,7 +96,7 @@ def check_time():
             b_kine.rate.sleep()
     return True
 
-def check_time_action(hour_start, min_start, sec_start, target_time):
+def check_time_action(hour_start, min_start, sec_start, target_time):          #проверка времени для одного действий
     hour_now = time.gmtime().tm_hour
     min_now = time.gmtime().tm_min
     sec_now = time.gmtime().tm_sec
@@ -105,3 +109,12 @@ def check_time_action(hour_start, min_start, sec_start, target_time):
 def get_aruco_data(data):
     global aruco_data
     aruco_data = data.data
+
+
+
+def prepare_manipulators():          #манипуляторы в начальное положение
+    for i in range(b_kine.send_topics):
+        b_kine.pub_front_servo.publish(1)
+        b_kine.pub_back_servo.publish(False)
+        b_kine.pub_front_manipul.publish(True)
+        b_kine.pub_back_manipul.publish(False)
