@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 2.8.3)
 project(navx_ros)
+
+add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -10,8 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Build ##
 ###########
 
-catkin_package(
-)
+catkin_package()
 
 include_directories(
   ${catkin_INCLUDE_DIRS}

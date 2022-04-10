@@ -3,7 +3,6 @@
 #include "std_msgs/Bool.h"
 #include <AHRS.h>
 #include <math.h>
-AHRS navx = AHRS("/dev/ttyACM0");
 
 float derive(float prevVal, float currVal, float prevTime, float currTime)
 {
@@ -23,6 +22,8 @@ int main(int argc, char** argv){
 
 	//sensor_msgs::Imu imu;		
 	std_msgs::Float64 CurrY;
+
+	AHRS navx = AHRS("/dev/ttyACM0");
 	//initialize valus to calculate angular velocity for the IMU message
 	float prevTime = navx.GetLastSensorTimestamp() / 1000.0;
 	float prevPitch = navx.GetPitch() * degToRad; //about x-axis (empirically y-axis)
