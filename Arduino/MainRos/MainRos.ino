@@ -4,14 +4,34 @@
 #include <std_msgs/Bool.h>        
 #include <std_msgs/Int64.h> 
 #include <Servo.h> 
-#include <Filter.h> 
 
 Servo back_manipulator;
 Servo back_servo;
 Servo front_manipulator;
 Servo front_servo;
 
-Moving_average filter(3);
+float medianL(float newVal) {
+  static int buf[3];
+  static byte count = 0;
+  buf[count] = newVal;
+  if (++count >= 3) count = 0;
+  return (max(buf[0], buf[1]) == max(buf[1], buf[2])) ? max(buf[0], buf[2]) : max(buf[1], min(buf[0], buf[2]));
+}
+float medianF(float newVal) {
+  static int buf[3];
+  static byte count = 0;
+  buf[count] = newVal;
+  if (++count >= 3) count = 0;
+  return (max(buf[0], buf[1]) == max(buf[1], buf[2])) ? max(buf[0], buf[2]) : max(buf[1], min(buf[0], buf[2]));
+}
+float medianR(float newVal) {
+  static int buf[3];
+  static byte count = 0;
+  buf[count] = newVal;
+  if (++count >= 3) count = 0;
+  return (max(buf[0], buf[1]) == max(buf[1], buf[2])) ? max(buf[0], buf[2]) : max(buf[1], min(buf[0], buf[2]));
+}
+
 ros::NodeHandle nh;
 
   int irsensor= 7;  
@@ -263,17 +283,17 @@ for(int i=0; i < 2; i++) {
     switch (index){
     case 0:
     //rangeL_msg.range= filter.filter(cm);
-    rangeL_msg.range= cm;
+    rangeL_msg.range=medianL(cm);
     pub_range_left.publish (&rangeL_msg);
     break;
   case 1:
     //rangeF_msg.range= filter.filter(cm);
-    rangeF_msg.range=cm;
+    rangeF_msg.range=medianF(cm);
     pub_range_front.publish (&rangeF_msg);
     break;
   case 2:
     //rangeR_msg.range= filter.filter(cm);
-    rangeR_msg.range=cm;
+    rangeR_msg.range=medianR(cm);
     pub_range_right.publish (&rangeR_msg);
     break;
   }
