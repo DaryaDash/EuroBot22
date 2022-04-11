@@ -13,7 +13,7 @@ import serial
 right_move = 1 # 1 если робот у правого края, -1 если у левого
 
  
-send_topics = 1  #сколько топиков отправляет за раз
+send_topics = 3  #сколько топиков отправляет за раз
 debag = False
 min_distance = -3   #минимальное растояние при котором он останавливается
 
@@ -66,6 +66,8 @@ except:
 
 line_val = 0
 
+
+#движение используя pid; возвращает текущий угол и целевой
 def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
     rospy.Subscriber('yaw', Float64, get_navx_ros)
     distance = sqrt(target_x**2+target_y**2)
@@ -109,7 +111,7 @@ def move_navx(target_x, target_y, target_yaw=0, now_yaw=False):
     return now_yaw, target_yaw
 
 
-
+#переместиться на угол (простая логика)
 def move_yaw(target_yaw):
     rospy.Subscriber('yaw', Float64, get_navx_ros)
     for i in range(40):
@@ -122,9 +124,9 @@ def move_yaw(target_yaw):
         right = -1
     else:
         right = 1
-    v_left = -100*right
-    v_right = -100*right
-    v_back = -100*right
+    v_left = -130*right
+    v_right = -200*right
+    v_back = -130*right
     if v_left > 255: v_left = 255
     elif v_left < -255: v_left = -255
     if v_right > 255: v_right = 255
