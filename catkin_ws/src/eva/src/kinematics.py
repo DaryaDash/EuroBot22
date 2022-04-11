@@ -10,7 +10,7 @@ b_kine.rate = rospy.Rate(20) # hz
 
 
 #движение до/от стены на определённое растояние
-def move_dist_f(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_r=0, move_forward=True):
+def move_dist(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target_r=0, move_forward=True):
     start_yaw = b_kine.get_yaw_navx()
     check_stop = 0
     while(not rospy.is_shutdown() and check_time()):
@@ -24,7 +24,8 @@ def move_dist_f(target_x, target_y, target_yaw=0, target_f=0, target_l=0, target
                 break
         else:
             check_stop = 0
-    b_kine.stop()
+    for i in range(b_kine.send_topics):
+        b_kine.stop()
 
 
 def move_yaw(target_yaw):   #повернуться на угол
@@ -34,7 +35,8 @@ def move_yaw(target_yaw):   #повернуться на угол
         if abs(b_kine.get_yaw_navx() - target_yaw) < 10:
             b_kine.stop()
             break
-    b_kine.stop()
+    for i in range(b_kine.send_topics):
+        b_kine.stop()
 
 
 #движение по времени
